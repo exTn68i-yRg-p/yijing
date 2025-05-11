@@ -1,0 +1,6421 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+<head>
+
+<HTA:APPLICATION>
+
+<title>Yarrow Stalks I Ching</title>
+<meta http-equiv="content-type" content="text/html; charset=windows-1252">
+<meta http-equiv="content-language" content="en-us">
+
+
+
+
+<SCRIPT type="text/javascript"><!--
+
+var stalkCell, changeCells, hexagram1Cell, hexagram2Cell, infoDiv, textCell, simplifyDiv, newCell;
+var hexSpans1, hexSpans2, hexLinks, indexListDiv, translationDiv;
+var textArray, textArrayWB, textArrayNR, textArrayGCR;
+var stalkCount = 49;
+var changeNumber = 0;
+var lineNumber = 0;
+var hexagramString = "";
+var secondHexagram = false;
+var resultHTML = "";
+var simplifiedHTML = "";
+var hexCellHTML;
+var bgColor1 = "#663300";
+var bgColor2 = "#885522";
+var bColor1 = "#ffcc99";
+var bColor2 = "#ffffee";
+var Opera = false; // Opera 9.10 didn't maintain cell width after resizing or deleting cells
+var aSpeed = 333;
+var spacer = "<p>—<" + "/p>";
+
+var yarrowTable = document.createElement("table");
+with (yarrowTable) {
+	border = 0;
+	cellPadding = 0;
+	cellSpacing = 0;
+	appendChild(document.createElement("tbody"));
+	firstChild.appendChild(document.createElement("tr")); }
+
+var yarrowCell = document.createElement("td");
+yarrowCell.appendChild(document.createTextNode("\u00A0"));
+with (yarrowCell.style) {
+	width = "3px";
+	height = "350px";
+	fontSize = "1px";
+	lineHeight = "0";
+	backgroundColor = "#663300";
+	borderWidth = "0px";
+	borderLeftWidth = "1px";
+	borderStyle = "solid";
+	borderColor = bColor1; }
+
+var dividerCell = yarrowCell.cloneNode(true);
+dividerCell.id = "dividerC";
+with (dividerCell.style) {
+	width = "5px";
+	backgroundColor = ""; }
+
+var yarrowTable50 = yarrowTable.cloneNode("true");
+newCell = yarrowCell.cloneNode(true);
+with (newCell.style) {
+	width = "350px";
+	height = "3px";
+	fontSize = "3px";
+	borderWidth = "0px"; }
+yarrowTable50.firstChild.firstChild.appendChild(newCell);
+
+
+
+
+function createYarrowStalks(sc, where, varyW) {
+where.innerHTML = "";
+var newTable = yarrowTable.cloneNode(true);
+for (var i=0; i<sc; i++) {
+	newCell = yarrowCell.cloneNode(true);
+	if (varyW) {
+		newCell.style.width = (Math.floor(Math.random() * 5) + 2).toString() + "px";
+		if ((i > 0) && (i < sc - 1) &&
+				!((lineNumber == 5) && (changeNumber == 2))) {
+				// !((lineNumber == 6) && (stalkCount == 49))) { // allows one more click
+			newCell.index = i;
+			newCell.onclick = function() {
+				makeChange(this.index); }
+			newCell.style.cursor = "pointer";
+
+			if ((lineNumber < 6) && (changeNumber != 2)) {
+
+			newCell.onmouseover = function() {
+				if (!Opera) { // Opera 9.10 didn’t handle this
+					this.parentNode.removeChild(document.getElementById("dividerC"));
+					var dC = dividerCell.cloneNode(true);
+					this.parentNode.insertBefore(dC, this);
+					dC.style.cursor = "pointer";
+					dC.onclick = function() {
+						makeChange(this.nextSibling.index); } }
+				else {	this.style.backgroundColor = bgColor2;
+					this.previousSibling.style.backgroundColor = bgColor2;
+					this.style.borderColor = bColor2; } }
+
+			newCell.onmouseout = function() {
+				if (Opera) {	this.style.backgroundColor = bgColor1;
+					this.previousSibling.style.backgroundColor = bgColor1;
+					this.style.borderColor = bColor1; } } }
+		} }
+
+	if (i == 0)
+		newCell.style.borderWidth = "0px";
+	newTable.firstChild.firstChild.appendChild(newCell); }
+
+if (varyW)
+	newTable.firstChild.firstChild.appendChild(dividerCell.cloneNode(true));
+
+where.appendChild(newTable);
+}
+
+
+
+
+function makeChange(LHeapCount) {
+if (!document.enteredLinesForm.cb.checked) {
+
+if ((changeNumber == 3) && (stalkCount < 49)) { // regroup the stalks
+	stalkCount = 49;
+	createYarrowStalks(stalkCount, stalkCell, true);
+	for (var i=0; i<3; i++)
+		changeCells[i].innerHTML = ""; }
+
+if (lineNumber < 6) {
+
+if (changeNumber < 3) { // make a change
+
+var changeCount = 1 + bigMod(LHeapCount, 4) + bigMod(stalkCount - LHeapCount - 1, 4);
+stalkCount -= changeCount;
+createYarrowStalks(stalkCount, stalkCell, true);
+createYarrowStalks(changeCount, changeCells[changeNumber], false);
+
+if (changeNumber == 2) { // draw the line
+
+	var line = stalkCount / 4; // "Fundamental theorem of yarrow stalks."
+			// Possible remainders after the 3 changes are 24, 28, 32, 36;
+			// divide by 4 to determine the line.
+
+	hexagramString += line.toString();
+
+	drawLine(line, lineNumber == 2);
+
+	if ((line == 6) || (line == 9))
+		secondHexagram = true;
+
+	if (lineNumber == 5) {
+		if (secondHexagram)
+			setTimeout('hexagram2Cell.style.visibility = "visible"', aSpeed * 2);
+		setTimeout("readTheHexagrams(hexagram1Cell)", aSpeed * (2 + (secondHexagram ? 2 : 0))); }
+
+	lineNumber ++; }
+}
+
+changeNumber = (changeNumber + 1) % 4;
+}
+
+disableEnteredLinesEtc(true);
+}
+
+else	oneLine(LHeapCount);
+}
+
+
+
+function oneLine(LHeapCount) {
+
+if (changeNumber > -2) { // select the trigrams
+
+	var trigramStr = trigramNumericArray[LHeapCount % 8];
+	hexagramString += trigramStr;
+
+	for (var i=0; i<3; i++)
+		drawLine(trigramStr.substr(i, 1), i==2);
+
+	changeNumber --; }
+
+else if (changeNumber == -2) { // select the moving line
+
+	var movingLine = LHeapCount % 6;
+
+	hexagramString = hexagramString.split("");
+	hexagramString[movingLine] = hexagramString[movingLine].replace(/7/, "9").replace(/8/, "6");
+	hexagramString = hexagramString.join("");
+	hexagram1Cell.innerHTML = hexCellHTML;
+	hexagram2Cell.innerHTML = hexCellHTML;
+
+	for (var i=0; i<6; i++)
+		drawLine(hexagramString.substr(i, 1), i == 2);
+
+	document.displayForm.s[0].checked = true; // basic display
+	secondHexagram = true;
+	setTimeout("hexagram2Cell.style.visibility = 'visible'", aSpeed * 2);
+	setTimeout("readTheHexagrams(hexagram1Cell)", aSpeed * 4);
+
+	lineNumber = 5;
+	changeNumber = 2; }
+
+stalkCount = 49;
+createYarrowStalks(stalkCount, stalkCell, true);
+
+disableEnteredLinesEtc(true);
+}
+
+
+
+
+function drawLine(line, space) {
+if (line == 6) {
+	hexagram1Cell.insertBefore(movingYinTable.cloneNode(true), hexagram1Cell.firstChild);
+	hexagram2Cell.insertBefore(yangTable.cloneNode(true), hexagram2Cell.firstChild); }
+else if (line == 7) {
+	hexagram1Cell.insertBefore(yangTable.cloneNode(true), hexagram1Cell.firstChild);
+	hexagram2Cell.insertBefore(yangTable.cloneNode(true), hexagram2Cell.firstChild); }
+else if (line == 8) {
+	hexagram1Cell.insertBefore(yinTable.cloneNode(true), hexagram1Cell.firstChild);
+	hexagram2Cell.insertBefore(yinTable.cloneNode(true), hexagram2Cell.firstChild); }
+else if (line == 9) {
+	hexagram1Cell.insertBefore(movingYangTable.cloneNode(true), hexagram1Cell.firstChild);
+	hexagram2Cell.insertBefore(yinTable.cloneNode(true), hexagram2Cell.firstChild); }
+if (space) {
+	hexagram1Cell.firstChild.style.marginTop = "2em";
+	hexagram2Cell.firstChild.style.marginTop = "2em"; }
+}
+
+
+
+
+function readTheHexagrams(scrollTarget) {
+
+var i, j, n, n2;
+var tFYText = "";
+var sFYText = "";
+var movingLineCount = 6 - hexagramString.replace(/6|9/g, "").length;
+var selectionDelimiter = spacer + "\r\n<p>";
+if ((document.displayForm.s[3].checked) || (document.displayForm.s[4].checked) ||
+		(document.displayForm.s[5].checked))
+	selectionDelimiter = "\r\n<p class=\"mT2\">";
+resultHTML = "";
+
+
+
+if (document.questionForm.question.value.replace(/\s/g, "") != "")
+	resultHTML += "<p class=\"mB2\">" +
+	document.questionForm.question.value.replace(/\s*$/, "").replace(/&/g, "&amp;").replace(/[<]/g, "&lt;").replace(/>/g, "&gt;").replace(/  /g, " &nbsp;").replace(/\r?\n/g, "<br>") +
+	"<" + "/p>\r\n";
+
+resultHTML += "<p class=\"mB2\">lines:&nbsp; " + hexagramString + "<br>\r\n";
+
+resultHTML += "hexagram" + (secondHexagram ? "s" : "") + ":&nbsp; " +
+	generateHexagramReference(hexagramString) + "<" + "/p>";
+
+
+
+resultHTML += "<!--basicDelimiterStart\/\/-->\r\n";
+
+resultHTML += generateHexagramText(hexagramString, true, true, true, true);
+
+resultHTML += "<!--basicDelimiterEnd\/\/-->\r\n";
+
+
+
+resultHTML += "<!--extendedDelimiterStart\/\/-->\r\n";
+
+resultHTML += "<!--linesDelimiterStart\/\/-->\r\n"
+
+if (movingLineCount > 0) {
+
+var hex2Str = transHexagram(hexagramString);
+var bBits;
+
+resultHTML += spacer + "\r\n<p>Moving line relationships:<" + "/p><div class=\"likeP\">";
+for (i=0; i<6; i++) {
+	n = parseInt(hexagramString.substr(i, 1));
+	if ((n == 6) || (n == 9)) {
+		resultHTML += "\r\n<div class=\"mT0\">";
+
+		if (n % 2 == ((i+1) % 2))
+			resultHTML += (i+1).toString() + " changes from correct to incorrect, ";
+		else	resultHTML += (i+1).toString() + " changes from incorrect to correct, ";
+
+		bBits = 0;
+		n2 = parseInt(hexagramString.substr((i+3) % 6, 1));
+		
+			bBits += 1;
+		n = parseInt(hex2Str.substr(i, 1));
+		n2 = parseInt(hex2Str.substr((i+3) % 6, 1));
+		if ((n % 2) != (n2 % 2))
+			bBits += 2;
+		if (bBits == 3)
+			resultHTML += "remains balanced.";
+		else if (bBits == 2)
+			resultHTML += "unbalanced to balanced.";
+		else if (bBits == 1)
+			resultHTML += "balanced to unbalanced.";
+		else if (bBits == 0)
+			resultHTML += "remains unbalanced.";
+
+		resultHTML += "<" + "/div>"; } }
+
+resultHTML += "<" + "/div>";
+}
+
+resultHTML += "<!--linesDelimiterEnd\/\/-->\r\n";
+
+
+
+resultHTML += "<!--nuclearDelimiterStart\/\/-->\r\n";
+
+var nuclearHexagramNumber = getNuclearHexagram(hexagramString);
+
+resultHTML += spacer + "\r\n<p>Nuclear hexagram" + (secondHexagram ? "s" : "") + ":<" + "/p>" +
+	generateHexagramText(nuclearHexagramNumber);
+if (secondHexagram) {
+	var nuclearHexagram2Number = getNuclearHexagram(transHexagram(hexagramString));
+	resultHTML += generateHexagramText(nuclearHexagram2Number); }
+
+resultHTML += "<!--nuclearDelimiterEnd\/\/-->\r\n";
+
+
+
+resultHTML += "<!--transitionalDelimiterStart\/\/-->\r\n";
+
+if (movingLineCount > 1) {
+	resultHTML += spacer + "\r\n<p>Transitional hexagrams:<" + "/p>\r\n<p>";
+	var copyStr = hexagramString.split("");
+	var fyStr;
+	var tempFlag = false;
+	var txt = "";
+	for (i=0; i<6; i++) {
+		if ((copyStr[i] == "6") || (copyStr[i] == "9")) {
+			var tranStr = copyArray(copyStr);
+			for (j=i+1; j<6; j++)
+				tranStr[j] = straightHexagram(tranStr[j]);
+			tranStr = tranStr.join("");
+			if (tempFlag)
+				resultHTML += ", ";
+			tempFlag = true;
+			resultHTML += generateHexagramReference(tranStr, false, false, true);
+			txt += generateHexagramText(tranStr, true);
+			copyStr[i] = transHexagram(copyStr[i]);
+			fyStr = copyArray(tranStr);
+			fyStr[i] = (fyStr[i] == "6" ? "9" : "6");
+			fyStr = fyStr.join("");
+			tFYText += "\r\n<p>" +
+				generateHexagramReference(fyStr, false, false, true) + "<" + "/p>";
+			tFYText += generateLineText(fyStr); } }
+	copyStr = transHexagram(hexagramString);
+	resultHTML += ", " + generateHexagramReference(copyStr);
+	txt += generateHexagramText(copyStr, true);
+	resultHTML += "\r\n<" + "/p>" + txt; }
+
+resultHTML += "<!--transitionalDelimiterEnd\/\/-->\r\n";
+
+
+
+resultHTML += "<!--stepsDelimiterStart\/\/-->\r\n";
+
+if (movingLineCount > 1) {
+	var fyStr;
+	resultHTML += spacer + "\r\n<p>Steps of change:<" + "/p>";
+	for (i=0; i<6; i++) {
+		var tempStr = hexagramString.split("");
+		if ((tempStr[i] == "6") || (tempStr[i] == "9")) {
+			tempStr[i] = transHexagram(tempStr[i]);
+			tempStr = tempStr.join("");
+			resultHTML += generateHexagramText(tempStr);
+			fyStr = straightHexagram(hexagramString).split("");
+			fyStr[i] = (fyStr[i] == "8" ? "9" : "6");
+			fyStr = fyStr.join("");
+			sFYText += "\r\n<p>" +
+				generateHexagramReference(fyStr, false, false, true) + "<" + "/p>";
+			sFYText += generateLineText(fyStr); } } }
+
+resultHTML += "<!--stepsDelimiterEnd\/\/-->\r\n";
+
+
+
+resultHTML += "<!--changeDelimiterStart\/\/-->\r\n";
+
+if (secondHexagram) {
+resultHTML += spacer + "\r\n<p>Fan yao:<" + "/p>";
+var copyStr = hex2Str.split("");
+for (i=0; i<6; i++) {
+	if (hexagramString.substr(i, 1) == "6")
+		copyStr[i] = "9";
+	else if (hexagramString.substr(i, 1) == "9")
+		copyStr[i] = "6"; }
+copyStr = copyStr.join("");
+resultHTML += "\r\n<p>" + generateHexagramReference(copyStr, false, false, true) + "<" + "/p>";
+resultHTML += generateLineText(copyStr); }
+//resultHTML += generateHexagramText(copyStr, true); }
+
+if (tFYText != "") {
+resultHTML += spacer + "\r\n<p>Transitional fan yao:<" + "/p>";
+resultHTML += tFYText; }
+
+if (sFYText != "") {
+resultHTML += spacer + "\r\n<p>Fan yao steps:<" + "/p>";
+resultHTML += sFYText; }
+
+resultHTML += spacer + "\r\n<p>Patterns of change:<" + "/p>";
+var yinOperatorStr = "";
+var yangOperatorStr = "";
+for (i=0; i<6; i++) {
+	n = hexagramString.substr(i, 1);
+	if ((n == "6") || (n == "9")) {
+		yinOperatorStr += "6";
+		yangOperatorStr += "9"; }
+	else {	yinOperatorStr += "7";
+		yangOperatorStr += "8"; } }
+resultHTML += generateHexagramText(yinOperatorStr, true) +
+	generateHexagramText(yangOperatorStr, true);
+
+resultHTML += "<!--changeDelimiterEnd\/\/-->\r\n";
+
+
+
+resultHTML += "<!--antiDelimiterStart\/\/-->\r\n";
+
+if (movingLineCount < 6) {
+	resultHTML += spacer + "\r\n<p>Anti-hexagram:<" + "/p>";
+	var antiStr = "";
+	for (var i=0; i<6; i++) {
+		n = parseInt(hexagramString.substr(i, 1));
+		n = (n <= 7 ? 8 : 7);
+		antiStr += n.toString(); }
+	resultHTML += generateHexagramText(antiStr); }
+
+resultHTML += "<!--antiDelimiterEnd\/\/-->\r\n";
+
+
+
+resultHTML += "<!--shadowDelimiterStart\/\/-->\r\n";
+
+resultHTML += spacer + "\r\n<p>Balance hexagram:<" + "/p>";
+var balanceHexStr = "";
+for (i=0; i<3; i++) {
+	n = parseInt(hexagramString.substr(i, 1));
+	n2 = parseInt(hexagramString.substr(i+3, 1));
+	if ((n % 2) != (n2 % 2))
+		balanceHexStr += "7";
+	else	balanceHexStr += "8"; }
+for (i=0; i<3; i++) {
+	if (secondHexagram) {
+		n = parseInt(hex2Str.substr(i, 1));
+		n2 = parseInt(hex2Str.substr(i+3, 1));
+		if ((n % 2) != (n2 % 2))
+			balanceHexStr += "7";
+		else	balanceHexStr += "8"; }
+	else	balanceHexStr += balanceHexStr.substr(i, 1); }
+resultHTML += generateHexagramText(balanceHexStr);
+
+resultHTML += spacer + "\r\n<p>Shadow site:<" + "/p>";
+var shadowBitStr = hexagramArray[63 - findHexagram(hexagramString)];
+var shadowStr = "";
+for (i=0; i<6; i++)
+	shadowStr = (shadowBitStr.substr(i, 1) == "0" ? "8" : "7") + shadowStr;
+resultHTML += generateHexagramText(shadowStr);
+
+resultHTML += spacer + "\r\n<p>Reversed trigrams:<" + "/p>";
+var reversedTriStr = hexagramString.substr(3, 3) + hexagramString.substr(0, 3);
+resultHTML += generateHexagramText(reversedTriStr, true, true, true);
+
+resultHTML += "<!--shadowDelimiterEnd\/\/-->\r\n";
+
+resultHTML += "<!--extendedDelimiterEnd\/\/-->\r\n";
+
+
+
+resultHTML += "<!--foursomeDelimiterStart\/\/-->\r\n";
+
+resultHTML += selectionDelimiter + "Inverted and reversed hexagrams:<" + "/p>";
+
+var hexStrR = "";
+var hexStrN = "";
+var hexStrRN = "";
+var temp;
+
+for (i=0; i<6; i++) {
+	n = hexagramString.substr(i, 1);
+	hexStrR = n + hexStrR;			// reverses line order
+	hexStrN += (15 - parseInt(n)).toString();		// negates line polarity
+	hexStrRN = (15 - parseInt(n)).toString() + hexStrRN; }	// does both
+
+resultHTML += "<p>" + generateHexagramReference(hexagramString) + "-" +
+	generateHexagramReference(hexStrR, true, true) + "<br>\r\n" +
+	generateHexagramReference(hexStrN) + "-" +
+	generateHexagramReference(hexStrRN, true, true) + "<" +"/p>";
+
+temp = generateHexagramText(hexagramString, true, true, true);
+if (movingLineCount > 0)
+	temp = "<p class=\"mT2\">" + generateHexagramReference(hexagramString) + "</" + "p>" + temp;
+else	temp = "<p class=\"mT\">" + temp + "<" + "/p>";
+resultHTML += temp;
+
+temp = generateHexagramText(hexStrR, true, true, true, false, true);
+if (movingLineCount > 0)
+	temp = "<p class=\"mT2\">" + generateHexagramReference(hexStrR, false, true) + "</" + "p>" + temp;
+else	temp = "<p class=\"mT\">" + temp + "<" + "/p>";
+resultHTML += temp;
+
+temp = generateHexagramText(hexStrN, true, true, true);
+if (movingLineCount > 0)
+	temp = "<p class=\"mT2\">" + generateHexagramReference(hexStrN) + "</" + "p>" + temp;
+else	temp = "<p class=\"mT\">" + temp + "<" + "/p>";
+resultHTML += temp;
+
+temp = generateHexagramText(hexStrRN, true, true, true, false, true);
+if (movingLineCount > 0)
+	temp = "<p class=\"mT2\">" + generateHexagramReference(hexStrRN, false, true) + "</" + "p>" + temp;
+else	temp = "<p class=\"mT\">" + temp + "<" + "/p>";
+resultHTML += temp;
+
+resultHTML += "\r\n<!--foursomeDelimiterEnd\/\/-->\r\n";
+
+
+
+resultHTML += "<!--mutatingDelimiterStart\/\/-->\r\n";
+
+resultHTML += selectionDelimiter + "Mutating hexagrams:<" + "/p>";
+var tempStr = "";
+for (i=0; i<6; i++)
+	tempStr += (parseInt(hexagramString.substr(i, 1)) % 2).toString();
+
+for (j=0; j<12; j++) {
+var hexStr = "";
+for (i=0; i<6; i++) {
+	if ((hexagramString.substr(i, 1) == "8") || (hexagramString.substr(i, 1) == "7"))
+		n = (tempStr.substr(i, 1) == "0" ? "8" : "7");
+	else	n = (tempStr.substr(i, 1) == "0" ? "6" : "9");
+	hexStr += n; }
+resultHTML += "<p class=\"mT2\">" + romanNumeral[j] + ".&nbsp; " +	// (j+1).toString()
+	generateHexagramReference(hexStr) + "</" + "p>" +
+	generateHexagramText(hexStr, true, true, true);
+var tempStr2 = tempStr;
+tempStr = "";
+var p = j % 6;
+for (i=0; i<p; i++)
+	tempStr += tempStr2.substr(i, 1);
+tempStr += ((parseInt(tempStr2.substr(p, 1)) + 1) % 2).toString()
+for (i=p+1; i<6; i++)
+	tempStr += tempStr2.substr(i, 1);
+}
+
+resultHTML += "<!--mutatingDelimiterEnd\/\/-->\r\n";
+
+
+
+resultHTML += "<!--evolutionaryDelimiterStart\/\/-->\r\n";
+
+resultHTML += selectionDelimiter + "Evolutionary hexagrams:<" + "/p>";
+var tempStr = "";
+for (i=0; i<6; i++)
+	tempStr += (parseInt(hexagramString.substr(i, 1)) % 2).toString();
+
+for (j=0; j<12; j++) {
+var hexStr = "";
+for (i=0; i<6; i++) {
+	if ((hexagramString.substr(i, 1) == "8") || (hexagramString.substr(i, 1) == "7"))
+		n = (tempStr.substr(i, 1) == "0" ? "8" : "7");
+	else	n = (tempStr.substr(i, 1) == "0" ? "6" : "9");
+	hexStr += n; }
+resultHTML += "<p class=\"mT2\">" + romanNumeral[j] + ".&nbsp; " +	// (j+1).toString()
+	generateHexagramReference(hexStr) + "</" + "p>" +
+	generateHexagramText(hexStr, true, true, true);
+tempStr = ((parseInt(tempStr.substr(5, 1)) + 1) % 2).toString() + tempStr.substr(0, 5);
+}
+
+resultHTML += "<!--evolutionaryDelimiterEnd\/\/-->\r\n";
+
+
+
+resultHTML += "<!--familyDelimiterStart\/\/-->\r\n";
+
+resultHTML += selectionDelimiter + "First family:<" + "/p>";
+
+for (i=0; i<6; i++) {
+	var newStr = hexagramString.split("");
+	newStr[i] = (15 - parseInt(newStr[i])).toString();
+	newStr = newStr.join("");
+	resultHTML += "<p class=\"mT2\">" + (i+1).toString() + ".&nbsp; " +
+		generateHexagramReference(newStr) + "</" + "p>" +
+		generateHexagramText(newStr, true, true, true); }
+
+resultHTML += "<!--familyDelimiterEnd\/\/-->\r\n";
+
+
+
+simplifiedHTML =
+	resultHTML.replace(/\r?\n?<!--imageStart\/\/-->[^!]*<!--imageEnd\/\/-->\r?\n?/gi, "");
+simplifiedHTML =
+	simplifiedHTML.replace(/<br>(\s*)<p>/gi, "$1<p class=\"mT\">"); // the beginning of the second hexagram
+simplifiedHTML =
+	simplifiedHTML.replace(/(<p[^>]*>\d+\.)<\/p>\s*<p[^>]*>/gi, "$1<br>"); // Richter numbers
+
+		//window.clipboardData.setData("text", resultHTML +
+			//"\r\n\r\n==========\r\n\r\n" + simplifiedHTML);
+
+
+
+simplifyDiv.style.display = "";
+infoDiv.style.display = "none";
+textCell.className = "output";
+
+
+
+var theForm = document.displayForm;
+
+var txt = (theForm.m[0].checked ? resultHTML : simplifiedHTML);
+
+if (theForm.s[0].checked) {
+	txt = txt.replace(/<!--extendedDelimiterStart\/\/-->[\s\S]*<!--familyDelimiterEnd\/\/-->\r?\n?/, "");
+	txt = txt.replace(/<!--ChuHsiDelimiterStart\/\/-->[\s\S]*<!--ChuHsiDelimiterEnd\/\/-->\r?\n?/, "");
+	txt = txt.replace(/<!--rulesDelimiterStart\/\/-->[\s\S]*<!--rulesDelimiterEnd\/\/-->\r?\n?/, ""); }
+		// do ChuHsi and rules at the end as others contain them
+else if (theForm.s[1].checked) {
+	txt = txt.replace(/<!--extendedDelimiterStart\/\/-->[\s\S]*<!--transitionalDelimiterEnd\/\/-->\r?\n?/, "");
+	txt = txt.replace(/<!--changeDelimiterStart\/\/-->[\s\S]*<!--changeDelimiterEnd\/\/-->\r?\n?/, "");
+	txt = txt.replace(/<!--shadowDelimiterStart\/\/-->[\s\S]*<!--familyDelimiterEnd\/\/-->\r?\n?/, "");
+	txt = txt.replace(/<!--ChuHsiDelimiterStart\/\/-->[\s\S]*<!--ChuHsiDelimiterEnd\/\/-->\r?\n?/, "");
+	txt = txt.replace(/<!--rulesDelimiterStart\/\/-->[\s\S]*<!--rulesDelimiterEnd\/\/-->\r?\n?/, ""); }
+		// do ChuHsi and rules at the end as others contain them
+else if (theForm.s[2].checked)
+	txt = txt.replace(/<!--foursomeDelimiterStart\/\/-->[\s\S]*<!--familyDelimiterEnd\/\/-->\r?\n?/, "");
+else if (theForm.s[3].checked) {
+	txt = txt.replace(/<!--basicDelimiterStart\/\/-->[\s\S]*<!--extendedDelimiterEnd\/\/-->\r?\n?/, "");
+	txt = txt.replace(/<!--mutatingDelimiterStart\/\/-->[\s\S]*<!--familyDelimiterEnd\/\/-->\r?\n?/, ""); }
+else if (theForm.s[4].checked) {
+	txt = txt.replace(/<!--basicDelimiterStart\/\/-->[\s\S]*<!--foursomeDelimiterEnd\/\/-->\r?\n?/, "");
+	txt = txt.replace(/<!--evolutionaryDelimiterStart\/\/-->[\s\S]*<!--familyDelimiterEnd\/\/-->\r?\n?/, ""); }
+else if (theForm.s[5].checked) {
+	txt = txt.replace(/<!--basicDelimiterStart\/\/-->[\s\S]*<!--mutatingDelimiterEnd\/\/-->\r?\n?/, "");
+	txt = txt.replace(/<!--familyDelimiterStart\/\/-->[\s\S]*<!--familyDelimiterEnd\/\/-->\r?\n?/, ""); }
+else if (theForm.s[6].checked) {
+	txt = txt.replace(/<!--extendedDelimiterStart\/\/-->[\s\S]*<!--evolutionaryDelimiterEnd\/\/-->\r?\n?/, "");
+	txt = txt.replace(/<!--rulesDelimiterStart\/\/-->[\s\S]*<!--rulesDelimiterEnd\/\/-->\r?\n?/, ""); }
+// also adjust selectionDelimiter above
+
+textCell.innerHTML = txt;
+
+if (scrollTarget)
+	scrollToWhat(scrollTarget);
+}
+
+
+
+
+function generateHexagramText(hexStr, includeLines, includeSecondHexagram, includeChuHsi, includeRules, reversedL) {
+
+var movingLines = 0; // bits storing moving lines
+var movingLineCount = 0;
+var i, n, txt, temp, str;
+
+for (i=0; i<6; i++) {
+	n = hexStr.substr(i, 1);
+	if ((n == "6") || (n == "9")) {
+		movingLines += Math.pow(2, i);
+		movingLineCount ++; } }
+
+var hexagramNumber = findHexagram(hexStr); // 0-indexed
+
+txt = textArray[hexagramNumber][0][0]; // image
+temp = textArray[hexagramNumber][0][1]; // judgment
+if (!includeSecondHexagram)
+	temp = temp.replace(/p class=".*"/, "p");
+txt += temp;
+
+if (includeLines && (movingLineCount > 0)) {
+	temp = textArray[hexagramNumber][1]; // "the lines"
+	if (!includeSecondHexagram)
+		temp = temp.replace(/p class=".*"/, "p");
+	txt += temp;
+	temp = "";
+	for (i=0; i<6; i++) {
+		if (movingLines & Math.pow(2, i)) {
+		if (!reversedL)
+			temp += textArray[hexagramNumber][i + 2];
+		else	temp = textArray[hexagramNumber][i + 2] + temp; } }
+
+	if (((hexagramNumber == 0) || (hexagramNumber == 1)) && (movingLines == 63)) {
+		if (!reversedL)
+			temp += textArray[hexagramNumber][8];
+		else	temp = textArray[hexagramNumber][8] + temp; }
+
+	txt += temp; }
+
+if (includeSecondHexagram && secondHexagram) {
+	var hexagram2Number = findHexagram(transHexagram(hexStr));
+	txt += "<br>" + textArray[hexagram2Number][0][0] + textArray[hexagram2Number][0][1];
+	if (includeChuHsi) {
+		txt += "\r\n<!--ChuHsiDelimiterStart\/\/-->";
+		if ((movingLineCount == 4) || (movingLineCount == 5)) {
+		temp = "";
+		for (i=0; i<6; i++) {
+		if (!(movingLines & Math.pow(2, i))) {
+			if (document.translationForm.t[0].checked) 
+				str =
+				(textArray[hexagram2Number][i + 2]).replace(/\S+/, "<p>Firm line");
+			else if (document.translationForm.t[1].checked) 
+				str =
+				(textArray[hexagram2Number][i + 2]).replace(/\D*(\d)[^-]*/,
+					"<p class=\"hang\">Firm line $1 ");
+			else 	str =
+				(textArray[hexagram2Number][i + 2]);
+			if (!reversedL)
+				temp += str;
+			else	temp = str + temp; } }
+		txt += temp; }
+		txt += "\r\n<!--ChuHsiDelimiterEnd\/\/-->\r\n"; } }
+
+if (includeRules) {
+	txt += "<!--rulesDelimiterStart\/\/-->\r\n" + spacer + "\r\n";
+
+	var ChuHsiText;
+	if (movingLineCount == 0)
+		ChuHsiText = "no moving lines; use the hexagram statement;<br>" +
+			"inner trigram is <i>chen,<" + "/i> outer trigram is <i>hui<" + "/i>.";
+	else if (movingLineCount == 1)
+		ChuHsiText = "1 moving line; use the line statement.";
+	else if (movingLineCount == 2)
+		ChuHsiText = "2 moving lines; use the line statements, with upper as ruler.";
+	else if (movingLineCount == 3) {
+		ChuHsiText = "3 moving lines; base hexagram statement is <i>chen,<" + "/i><br>" +
+			"transformed hexagram statement is <i>hui;<" + "/i> <i>" +
+			((movingLines & Math.pow(2, 0)) ? "chen" : "hui") + "<" + "/i> is ruler."; }
+	else if (movingLineCount == 4)
+		ChuHsiText = "4 moving lines; use the 2 unchanging lines<br>" +
+			"in the transformed hexagram, with the lower as ruler.";
+	else if (movingLineCount == 5)
+		ChuHsiText = "5 moving lines; use the unchanging line<br>" +
+			"in the transformed hexagram.";
+	if (movingLineCount == 6) {
+		if ((hexagramNumber == 0) || (hexagramNumber == 1))
+			ChuHsiText = "all moving lines; use the appended text<br>" +
+				"(or the transformed hexagram statement).";
+		else	ChuHsiText = "all moving lines; use the transformed hexagram statement."; }
+	txt += "<p>Chu Hsi’s rule:&nbsp; " + ChuHsiText + "<" + "/p>";
+
+	var NanjingNumber = 0;
+	for (i=0; i<6; i++)
+		NanjingNumber += parseInt(hexStr.substr(i, 1));
+	NanjingNumber = 55 - NanjingNumber;
+	if (((NanjingNumber >= 7) && (NanjingNumber <= 12)) || (NanjingNumber == 19))
+		NanjingNumber = 25 - NanjingNumber;
+	NanjingNumber = bigMod(NanjingNumber, 6);
+
+	var NanjingText = "";
+	if (movingLines & Math.pow(2, NanjingNumber - 1)) {
+		var NanjingStr = hexStr.split("");
+		for (i=0; i<6; i++) {
+			if (i != NanjingNumber - 1)
+				NanjingStr[i] = straightHexagram(NanjingStr[i]); }
+		NanjingStr = NanjingStr.join("");
+		if (NanjingStr != hexStr)
+			NanjingText += generateHexagramReference(NanjingStr) + "; ";
+		NanjingText += "use the line statement for moving line " + NanjingNumber.toString() + ".";
+		if (NanjingStr != hexStr)
+			NanjingText += "\r\n" + generateHexagramText(transHexagram(NanjingStr)); }
+	else {	NanjingText += "line " + NanjingNumber.toString() + " is stable, with " +
+			(movingLineCount == 0 ? "no" : movingLineCount.toString()) + 
+			" moving line" + (movingLineCount == 1 ? "" : "s") + ";<br>use ";
+		if (movingLineCount < 2)
+			NanjingText += "the base hexagram statement.";
+		else if (movingLineCount < 4)
+			NanjingText += "both hexagram statements.";
+		else	NanjingText += "the transformed hexagram statement."; }
+
+	txt += "<p>Nanjing rule:&nbsp; " + NanjingText + "<" + "/p>";
+
+	txt += "\r\n<!--rulesDelimiterEnd\/\/-->\r\n";
+}
+
+if (!includeSecondHexagram)
+	txt = "<p class=\"mT\">" + txt + "<" + "/p>";
+
+return txt;
+}
+
+
+
+function generateLineText(hexStr, reversedL) {
+
+var movingLines = 0; // bits storing moving lines
+var movingLineCount = 0;
+var i, n, txt, temp;
+
+for (i=0; i<6; i++) {
+	n = hexStr.substr(i, 1);
+	if ((n == "6") || (n == "9")) {
+		movingLines += Math.pow(2, i);
+		movingLineCount ++; } }
+
+var hexagramNumber = findHexagram(hexStr); // 0-indexed
+
+txt = "";
+
+if (movingLineCount > 0) {
+	temp = "";
+	for (i=0; i<6; i++) {
+		if (movingLines & Math.pow(2, i)) {
+		if (!reversedL)
+			temp += textArray[hexagramNumber][i + 2];
+		else	temp = textArray[hexagramNumber][i + 2] + temp; } }
+	txt += temp; }
+
+return txt;
+}
+
+
+
+function generateHexagramReference(hexStr, reversedH, reversedL, linesOnly) {
+
+var movingLines = 0;
+var i, n;
+
+for (i=0; i<6; i++) {
+	n = hexStr.substr(i, 1);
+	if ((n == "6") || (n == "9"))
+		movingLines += Math.pow(2, i); }
+
+var hexagramNumber = findHexagram(hexStr); // 0-indexed
+
+var txt = (hexagramNumber + 1).toString();
+
+if (movingLines) {
+	var hexagram2Number = findHexagram(transHexagram(hexStr));
+	var lineString = "";
+	for (i=0; i<6; i++) {
+		if (movingLines & Math.pow(2, i)) {
+		if (!reversedL)
+			lineString += (i + 1).toString() + ",";
+		else	lineString = (i + 1).toString() + "," + lineString; } }
+	lineString = ":" + lineString.replace(/,$/, "");
+	txt += lineString;
+	if (!linesOnly) {
+	if (!reversedH)
+		txt += " — " + (hexagram2Number + 1).toString();
+	else	txt = (hexagram2Number + 1).toString() + " — " + txt; } }
+
+return txt;
+}
+
+
+
+
+function runEnteredLines() {
+if (lineNumber + changeNumber == 0) {
+
+var flag = false;
+var inputString = document.enteredLinesForm.enteredLinesField.value.replace(/^\D+|\D+$/g, "");
+
+if (inputString.match(/^[6-9]{6}(\D|$)/)) {
+	hexagramString = inputString.replace(/^([6-9]{6}).*/, "$1");
+	flag = true; }
+
+else if (inputString.match(/^\d\d?.*[-–—]\s*\d\d?/)) {
+	var hexNo1 = parseInt(inputString.replace(/^(\d\d?).*/, "$1"));
+	var hexNo2 = parseInt(inputString.replace(/.*[-–—]\s*(\d\d?).*/, "$1"));
+	if ((hexNo1 >= 1) && (hexNo1 <= 64) && (hexNo2 >= 1) && (hexNo2 <= 64)) {
+		var hexagram1BitStr = hexagramArray[hexNo1 - 1];
+		var hexagram2BitStr = hexagramArray[hexNo2 - 1];
+		var n;
+		for (var i=0; i<6; i++) {
+			n = hexagram1BitStr.substr(i, 1);
+			if (n == hexagram2BitStr.substr(i, 1))
+				n = ((n == 0) ? 8 : 7);
+			else	n = ((n == 0) ? 6 : 9);
+			hexagramString = n + hexagramString; }
+		flag = true; } }
+
+else {	inputString = inputString.replace(/\D+/g, "X").split("X");
+
+	inputString[0] = parseInt(inputString[0]);
+	if ((inputString.length <= 7) && ((inputString[0] >= 1) && (inputString[0] <= 64))) {
+		flag = true;
+		for (var i=1; i<inputString.length; i++) {
+			inputString[i] = parseInt(inputString[i]);
+			if ((inputString[i] < 1) || (inputString[i] > 6)) {
+				flag = false;
+				break; } } }
+
+	if (flag) {	var hexagramBitStr = hexagramArray[inputString[0] - 1];
+		hexagramString = new Array(6);
+		for (var i=0; i<6; i++)
+			hexagramString[i] = (hexagramBitStr.substr(5-i, 1) == "0" ? "8" : "7");
+		for (var i=1; i<inputString.length; i++)
+			hexagramString[inputString[i]-1] = (hexagramString[inputString[i]-1] == "8" ? "6" : "9");
+		hexagramString = hexagramString.join(""); } }
+
+if (flag) {	disableEnteredLinesEtc(true);
+	var line;
+	for (var i=0; i<6; i++) {
+		lineNumber = i;
+		line = hexagramString.charAt(i);
+		setTimeout("drawLine(" + line + ",  " + (i == 2) + ")", aSpeed + (i+1) * Math.round(aSpeed / 6));
+		if ((line == "6") || (line == "9"))
+			secondHexagram = true; }
+
+	if (secondHexagram)
+		setTimeout('hexagram2Cell.style.visibility = "visible"', aSpeed * 4);
+	setTimeout("readTheHexagrams(hexagram1Cell)", aSpeed * (4 + (secondHexagram ? 2 : 0)));
+
+	lineNumber = 6;
+	var stalks = stalkCell.firstChild.firstChild.firstChild;
+	for (i=0; i<stalks.childNodes.length; i++) {
+		with (stalks.childNodes[i]) {
+			style.cursor = "";
+			onmouseover = null;
+			onmouseout = null; } }
+	document.getElementById("dividerC").style.display = "none"; }
+
+else	document.getElementById("errorSpan").style.display = "";
+} }
+
+
+
+
+function disableEnteredLinesEtc(mode) {
+document.enteredLinesForm.enteredLinesField.disabled = (mode ? true : false);
+document.enteredLinesForm.enteredLinesField.style.backgroundColor = (mode ? "#ffffee" : "");
+document.getElementById("enterLinesLink").style.display = (mode ? "none" : "");
+document.getElementById("errorSpan").style.display = "none";
+document.getElementById("resetLink").style.display = (mode ? "" : "none");
+
+document.questionForm.question.readOnly = (mode ? true : false);
+document.questionForm.question.style.backgroundColor = (mode ? "#ffffee" : "");
+document.getElementById("questionLinks").style.display = (mode ? "none" : "");
+
+document.enteredLinesForm.cb.disabled = (mode ? true : false);
+}
+
+
+
+
+var yyTable = document.createElement("table");
+with (yyTable) {
+	border = 0;
+	cellPadding = 0;
+	cellSpacing = 0;
+	style.fontSize = "10px";
+	style.marginTop = "0.75em";
+	style.marginBottom = "0em";
+	appendChild(document.createElement("tbody"));
+	firstChild.appendChild(document.createElement("tr")); }
+
+var lineCell = document.createElement("td");
+with (lineCell) {
+	style.backgroundColor = "#000000";
+	style.color = "#000000";
+	style.fontWeight = "bold";
+	style.textAlign = "center";
+	appendChild(document.createTextNode("\u00A0")); }
+
+var yangTable = yyTable.cloneNode(true);
+newCell = lineCell.cloneNode(true);
+newCell.style.width = "12em";
+yangTable.firstChild.firstChild.appendChild(newCell);
+
+var movingYangTable = yangTable.cloneNode(true);
+with (movingYangTable.firstChild.firstChild.firstChild) {
+	style.color = "#ffffff";
+	replaceChild(document.createTextNode("O"), firstChild); }
+
+var yinTable = yyTable.cloneNode(true);
+newCell = lineCell.cloneNode(true);
+newCell.style.width = "5em";
+yinTable.firstChild.firstChild.appendChild(newCell);
+newCell = lineCell.cloneNode(true);
+with (newCell.style) {
+	backgroundColor = "";
+	width = "2em"; }
+yinTable.firstChild.firstChild.appendChild(newCell);
+newCell = lineCell.cloneNode(true);
+newCell.style.width = "5em";
+yinTable.firstChild.firstChild.appendChild(newCell);
+
+var movingYinTable = yinTable.cloneNode(true);
+with (movingYinTable.firstChild.firstChild.childNodes[1])
+	replaceChild(document.createTextNode("X"), firstChild);
+
+
+
+
+
+function createTextArrays() {
+var yinString = '<tr><td class="yinLine">&nbsp;</' + 'td><td class="yinSpace">&nbsp;</' +
+	'td><td class="yinLine">&nbsp;</' + 'td></' + 'tr>';
+var yangString = '<tr><td class="yangLine" colspan=3>&nbsp;</' + 'td></' + 'tr>';
+var spaceString = '<tr><td colspan=3>&nbsp;</' + 'td></' + 'tr>';	// these are for the image hexagrams
+
+var indexString = '<div class="small it mB"><a href="#index">index</' + 'a></' + 'div>';
+
+var linkStr = '<a name="LL"></' + 'a>' +
+	indexString +
+	'<span class="small it">' +
+	'<a href="javascript:;" onClick="changeTranslation(0, \'#LL\'); return false">Wilhelm</' + 'a> |' +
+	'<a href="javascript:;" onClick="changeTranslation(1, \'#LLR\'); return false">Richmond</' + 'a> |' +
+	'<a href="javascript:;" onClick="changeTranslation(2, \'#LLR2\'); return false">Richter</' + 'a></' + 'span>';
+
+var imageString, namesString, linkString, str;
+
+textArrayWB = document.getElementById("WilhelmDiv").innerHTML;
+textArrayNR = document.getElementById("RichmondDiv").innerHTML;
+textArrayGCR = document.getElementById("RichterDiv").innerHTML;
+
+for (var i=0; i<64; i++) { // create image hexagrams and text
+	str = hexagramArray[i];
+	imageString = '<!--imageStart//-->\r\n' +
+		'<table class="lineTable" border=0 cellPadding=0 cellSpacing=0>\r\n<tr>\r\n<td rowSpan=2>\r\n' +
+		'<table class="imageTable" border=0 cellPadding=0 cellSpacing=0>';
+	for (var j=0; j<=2; j++)
+		imageString += (str.substr(j, 1) == "0" ? yinString : yangString) + spaceString;
+	for (var j=3; j<=5; j++)
+		imageString += spaceString + (str.substr(j, 1) == "0" ? yinString : yangString);
+	imageString += '</' + 'table>\r\n' + '</' + 'td>\r\n';
+
+	namesString = '<td><i>above</' + 'i></' + 'td>\r\n<td>' + trigramArray[0][parseInt(str.substr(0, 3), 2)][0] +
+		'</' + 'td>\r\n<td>' + trigramArray[0][parseInt(str.substr(0, 3), 2)][1] +
+		'</' + 'td>\r\n</' + 'tr>\r\n<tr>\r\n<td><i>below</' + 'i></' + 'td>\r\n<td>' +
+			trigramArray[0][parseInt(str.substr(3, 3), 2)][0] +
+		'</' + 'td>\r\n<td>' + trigramArray[0][parseInt(str.substr(3, 3), 2)][1] +
+		'</' + 'td>\r\n</' + 'tr>\r\n</' + 'table>\r\n<!--imageEnd//-->\r\n<!--imageDelimiter//-->';
+
+	textArrayWB = textArrayWB.replace(/\r?\n?<!--imageHTML\/\/-->\r?\n?/i,
+		"\r\n\r\n" + imageString + namesString + "\r\n\r\n");
+	textArrayNR = textArrayNR.replace(/\r?\n?<!--imageHTML\/\/-->\r?\n?/i,
+		"\r\n\r\n" + imageString + namesString + "\r\n\r\n");
+
+	namesString = '<td>' + trigramArray[1][parseInt(str.substr(0, 3), 2)][0] +
+		'</' + 'td>\r\n</' + 'tr>\r\n<tr>\r\n<td>' +
+			trigramArray[1][parseInt(str.substr(3, 3), 2)][0] +
+		'</' + 'td>\r\n</' + 'tr>\r\n</' + 'table>\r\n<!--imageEnd//--><!--imageDelimiter//-->';
+
+	textArrayGCR = textArrayGCR.replace(/\r?\n?<!--imageHTML\/\/-->\r?\n?/i,
+		"\r\n" + imageString + namesString);
+
+	linkString = linkStr.replace(/LL/g, (i + 1).toString());
+
+	textArrayWB = textArrayWB.replace(/<!--linkHTML\/\/-->/i, linkString);
+	textArrayNR = textArrayNR.replace(/<!--linkHTML\/\/-->/i, linkString.replace(/(\d+)/, "$1R"));
+	textArrayGCR = textArrayGCR.replace(/<!--linkHTML\/\/-->/i, linkString.replace(/(\d+)/, "$1R2"));
+}
+
+document.getElementById("WilhelmDiv").innerHTML = textArrayWB + "<br>" + indexString + "<br><br>";
+document.getElementById("RichmondDiv").innerHTML = textArrayNR + "<br>" + indexString + "<br><br>";
+document.getElementById("RichterDiv").innerHTML = textArrayGCR + "<br>" + indexString + "<br><br>";
+
+textArrayWB = formatTextArray(textArrayWB);
+textArrayNR = formatTextArray(textArrayNR);
+textArrayGCR = formatTextArray(textArrayGCR);
+}
+
+
+
+
+function formatTextArray(which) {
+which = which.replace(/^[\s\S]*<!--textDelimiter\/\/-->/, "");
+which = which.split("<!--hexagramDelimiter//-->");
+for (var i=0; i<which.length; i++) {
+	which[i] = which[i].split("<!--lineDelimiter//-->");
+	which[i][0] = which[i][0].split("<!--imageDelimiter//-->"); }
+return which;
+}
+
+
+
+
+function formatIndexLists() {
+var txt = document.getElementById("indexListWBDiv").innerHTML;
+txt = txt.replace(/^\s*|\s*$/g, "").replace(/;\s*/g, ";").split(";");
+for (var i=0; i<txt.length; i++)
+	txt[i] = '<a href="#' + (i + 1).toString() + '">' + (i + 1).toString() + '</' + 'a>.&nbsp; <span class="titleInd">' +
+		txt[i] + '</' + 'span><br>';
+txt = txt.join("\r\n");
+document.getElementById("indexListWBDiv").innerHTML = "\r\n<br>\r\n" + txt + "\r\n";
+
+txt = document.getElementById("indexListNRDiv").innerHTML;
+txt = txt.replace(/^\s*|\s*$/g, "").replace(/;\s*/g, ";").split(";");
+for (var i=0; i<txt.length; i++)
+	txt[i] = '<a href="#' + (i + 1).toString() + 'R">' + (i + 1).toString() + '</' + 'a>.&nbsp; <span class="titleInd">' +
+		txt[i] + '</' + 'span><br>';
+txt = txt.join("\r\n");
+document.getElementById("indexListNRDiv").innerHTML = "\r\n<br>\r\n" + txt + "\r\n";
+
+txt = document.getElementById("indexListGCRDiv").innerHTML;
+txt = txt.replace(/^\s*|\s*$/g, "").replace(/;\s*/g, ";").split(";");
+for (var i=0; i<txt.length; i++)
+	txt[i] = '<a href="#' + (i + 1).toString() + 'R2">' + (i + 1).toString() + '</' + 'a>.&nbsp; ' +
+		txt[i] + '<br>';
+txt = txt.join("\r\n");
+document.getElementById("indexListGCRDiv").innerHTML = "\r\n<br>\r\n" + txt + "\r\n";
+}
+
+
+
+
+function createIndexTrigrams() {
+var iTable = document.getElementById("theIndexTable");
+var i, lineStr, txt;
+
+var yinRow = '<tr><td class="yinLine">&nbsp;</' + 'td><td class="yinSpace">&nbsp;</' + 'td>' +
+	'<td class="yinLine">&nbsp;</' + 'td></' + 'tr>';
+var yangRow = '<tr><td class="yangLine" colspan=3>&nbsp;</' + 'td></' + 'tr>';
+var spaceRow = '<tr><td colspan=3>&nbsp;</' + 'td></' + 'tr>';
+
+for (i=1; i<=8; i++) {
+	lineStr = iTable.rows[0].cells[i].innerHTML;
+	txt = '<table class="imageTableInd" border=0 cellPadding=0 cellSpacing=0>' +
+		(lineStr.substr(2, 1) == "0" ? yinRow : yangRow) +
+		spaceRow +
+		(lineStr.substr(1, 1) == "0" ? yinRow : yangRow) +
+		spaceRow +
+		(lineStr.substr(0, 1) == "0" ? yinRow : yangRow) +
+		'</' + 'table>';
+	iTable.rows[0].cells[i].innerHTML = txt;
+	iTable.rows[i].cells[0].innerHTML = txt; }
+}
+
+
+
+
+window.onload = function() {
+
+//if (navigator.userAgent.indexOf("Opera") != -1)
+	//Opera = true;
+
+dateStamp(true);
+
+stalkCell = document.getElementById("stalkC");
+changeCells = new Array(document.getElementById("changeC0"),
+	document.getElementById("changeC1"),
+	document.getElementById("changeC2"));
+hexagram1Cell = document.getElementById("hexagram1C");
+hexagram2Cell = document.getElementById("hexagram2C");
+infoDiv = document.getElementById("infoD");
+textCell = document.getElementById("textC");
+simplifyDiv = document.getElementById("simplifyD");
+
+hexCellHTML = hexagram1Cell.innerHTML;
+
+document.getElementById("WuChi").appendChild(yarrowTable50);
+
+createYarrowStalks(stalkCount, stalkCell, true);
+
+createTextArrays();
+formatIndexLists();
+createIndexTrigrams();
+
+hexLinks = document.getElementById("indexTableDiv").getElementsByTagName("a");
+hexSpans1 = new Array();
+hexSpans2 = new Array();
+var hexSpans = document.getElementById("indexTableDiv").getElementsByTagName("span");
+for (var i=0; i<hexSpans.length; i++) {
+	if (hexSpans[i].title == "hexSpan1")
+		hexSpans1[hexSpans1.length] = hexSpans[i];
+	else if (hexSpans[i].title == "hexSpan2")
+		hexSpans2[hexSpans2.length] = hexSpans[i]; }
+
+setTranslation();
+
+insertLine(document.getElementById("cYinCell"), movingYinTable.cloneNode(true));
+insertLine(document.getElementById("yangCell"), yangTable.cloneNode(true));
+insertLine(document.getElementById("yinCell"), yinTable.cloneNode(true));
+insertLine(document.getElementById("cYangCell"), movingYangTable.cloneNode(true));
+
+infoDiv.style.display = "";
+textCell.innerHTML = "&nbsp;";
+disableEnteredLinesEtc(false);
+
+window.scrollTo(0, 0);
+}
+
+
+
+
+function setTranslation(scrollTarget) {
+if (document.translationForm.t[0].checked) {
+	indexListDiv = document.getElementById("indexListWBDiv");
+	translationDiv = document.getElementById("WilhelmDiv");
+	textArray = textArrayWB;
+	formatIndexTable(0); }
+else if (document.translationForm.t[1].checked) {
+	indexListDiv = document.getElementById("indexListNRDiv");
+	translationDiv = document.getElementById("RichmondDiv");
+	textArray = textArrayNR;
+	formatIndexTable(1); }
+else {	indexListDiv = document.getElementById("indexListGCRDiv");
+	translationDiv = document.getElementById("RichterDiv");
+	textArray = textArrayGCR;
+	formatIndexTable(2); }
+showIndexEtc();
+if (resultHTML != "")
+	readTheHexagrams(scrollTarget);
+}
+
+function formatIndexTable(n) {
+for (var i=0; i<8; i++) {
+	hexSpans1[i].style.display = (n == 2 ? "none" : "");
+	hexSpans2[i].style.display = ((n == 0) || (n == 1) ? "none" : ""); }
+var str;
+if (n == 0)
+	str = "";
+else if (n == 1)
+	str = "R";
+else if (n == 2)
+	str = "R2";
+for (var i=0; i<hexLinks.length; i++)
+	hexLinks[i].href = hexLinks[i].href.replace(/R2?/, "") + str;
+}
+
+function changeTranslation(which, loc) {
+document.translationForm.t[which].checked = true;
+setTranslation();
+setTimeout("window.location.href = \"" + loc + "\"", 10); // Opera still needs the timeout
+}
+
+
+
+
+function insertLine(tempCell, tempTable) {
+tempTable.style.marginTop = "0.375em";
+tempTable.style.marginBottom = "0.375em";
+tempCell.insertBefore(tempTable, tempCell.firstChild);
+}
+
+
+
+function showText(which) {
+document.getElementById(which).style.display =
+	(document.getElementById(which).style.display == "none" ? "" : "none");
+}
+
+function showIndexEtc() {
+var temp = document.getElementById("indexTableDiv").style.display;
+
+document.getElementById("indexListWBDiv").style.display = "none";
+document.getElementById("WilhelmDiv").style.display = "none";
+document.getElementById("indexListNRDiv").style.display = "none";
+document.getElementById("RichmondDiv").style.display = "none";
+document.getElementById("indexListGCRDiv").style.display = "none";
+document.getElementById("RichterDiv").style.display = "none";
+
+indexListDiv.style.display = temp;
+translationDiv.style.display = temp;
+}
+
+
+
+
+function resetScript() {
+
+infoDiv.style.display = "";
+simplifyDiv.style.display = "none";
+textCell.className = "";
+textCell.innerHTML = "&nbsp;";
+
+stalkCount = 49;
+changeNumber = 0;
+lineNumber = 0;
+hexagramString = "";
+secondHexagram = false;
+resultHTML = "";
+simplifiedHTML = "";
+
+dateStamp(true);
+
+disableEnteredLinesEtc(false);
+
+createYarrowStalks(stalkCount, stalkCell, true);
+for (var i=0; i<3; i++)
+	changeCells[i].innerHTML = "";
+
+hexagram1Cell.innerHTML = hexCellHTML;
+hexagram2Cell.innerHTML = hexCellHTML;
+
+hexagram2Cell.style.visibility = "hidden";
+
+window.scrollTo(0, 0);
+}
+
+
+
+
+function bigMod(m, n)  { // m % n with result 0 changed to n
+return ((m + n - 1) % n) + 1;
+}
+
+function twoDigit(str) {
+str = "00" + str;
+return str.substr(str.length-2, 2);
+}
+
+function dateStamp(override) {
+var theField = document.questionForm.question;
+var today = new Date();
+var dateStr = (today.getMonth() + 1).toString() + "/" +
+	today.getDate() + "/" + today.getFullYear() + "  " +
+	twoDigit(today.getHours()) + ":" + twoDigit(today.getMinutes());
+var dateRe = /\d\d?\/\d\d?\/\d\d\d?\d? +\d\d?:\d\d/;
+
+if ((theField.value.replace(/\s/g, "") == "") || override)
+	theField.value = dateStr + "\r\n";
+else if (theField.value.match(dateRe))
+	theField.value = theField.value.replace(dateRe, dateStr);
+else if (theField.value.match(/^\s*\r?\n/, ""))
+	theField.value = theField.value.replace(/^\s*(\r?\n)/, dateStr + "$1");
+else	theField.value = dateStr + "\r\n" + theField.value;
+}
+
+function copyArray(a) {
+var n = new Array();
+for (var i=0; i<a.length; i++)
+	n[i] = a[i];
+return n;
+}
+
+function scrollToWhat(what) {
+what.scrollIntoView(true);
+window.scrollBy(0, -10);
+}
+
+
+
+
+function transHexagram(hexStr) {
+return hexStr.replace(/6/g, "7").replace(/9/g, "8");
+}
+
+function straightHexagram(hexStr) {
+return hexStr.replace(/6/g, "8").replace(/9/g, "7");
+}
+
+function findHexagram(hexStr) {
+var hexagramBitStr = "";
+for (var i=0; i<6; i++)
+	hexagramBitStr = ((hexStr.substr(i, 1) == "6") || (hexStr.substr(i, 1) == "8") ? "0" : "1") + hexagramBitStr;
+for (var i=0; i<64; i++) {
+	if (hexagramBitStr == hexagramArray[i]) {
+		return i;
+		break; } }
+}
+
+function getNuclearHexagram(hexStr) {
+return hexStr.substr(1, 3) + hexStr.substr(2, 3);
+}
+
+var hexagramArray = new Array( // yin = 0, yang = 1; read right to left 
+"111111",
+"000000",
+"010001",
+"100010",
+"010111",
+"111010",
+"000010",
+"010000",
+"110111",
+"111011",
+"000111",
+"111000",
+"111101",
+"101111",
+"000100",
+"001000",
+"011001",
+"100110",
+"000011",
+"110000",
+"101001",
+"100101",
+"100000",
+"000001",
+"111001",
+"100111",
+"100001",
+"011110",
+"010010",
+"101101",
+"011100",
+"001110",
+"111100",
+"001111",
+"101000",
+"000101",
+"110101",
+"101011",
+"010100",
+"001010",
+"100011",
+"110001",
+"011111",
+"111110",
+"011000",
+"000110",
+"011010",
+"010110",
+"011101",
+"101110",
+"001001",
+"100100",
+"110100",
+"001011",
+"001101",
+"101100",
+"110110",
+"011011",
+"110010",
+"010011",
+"110011",
+"001100",
+"010101",
+"101010");
+
+var trigramArray = new Array(
+
+new Array(
+new Array("K’UN", "THE RECEPTIVE, EARTH"),
+new Array("CHÊN", "THE AROUSING, THUNDER"),
+new Array("K’AN", "THE ABYSMAL, WATER"),
+new Array("TUI", "THE JOYOUS, LAKE"),
+new Array("KÊN", "KEEPING STILL, MOUNTAIN"),
+new Array("LI", "THE CLINGING, FIRE"),
+new Array("SUN", "THE GENTLE, WIND, WOOD"),
+new Array("CH’IEN", "THE CREATIVE, HEAVEN")),
+
+new Array(
+new Array("Earth", ""),
+new Array("Thunder", ""),
+new Array("Water", ""),
+new Array("Lake", ""),
+new Array("Mountain", ""),
+new Array("Fire", ""),
+new Array("Wind", ""),
+new Array("Heaven", ""))
+
+);
+
+var trigramNumericArray = new Array(
+"777",
+"778",
+"787",
+"788",
+"877",
+"878",
+"887",
+"888");
+
+var romanNumeral = new Array("I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII");
+
+
+
+window.onbeforeunload = function() {
+textArrayWB = null;
+textArrayNR = null;
+textArrayGCR = null;
+hexagramArray = null;
+trigramArray = null;
+trigramNumericArray = null;
+romanNumeral = null;
+resultHTML = null;
+simplifiedHTML = null;
+hexSpans1 = null;
+hexSpans2 = null;
+hexLinks = null;
+}
+
+//--></SCRIPT>
+
+
+
+
+<style type="text/css"><!--
+
+body  { margin: 2em; margin-top: 3em; background-color: #ffffee; font-family: "Book Antiqua", serif }
+form  { margin: 0px; overflow: hidden }
+p, .likeP  { margin: 0em; margin-bottom: 0.75em }
+
+.small  { font-size: 89% }
+.it  { font-style: italic }
+.indent  { text-indent: 2em }
+.indent2  { text-indent: 4em }
+.hang  { text-indent: -2em; margin-left: 2em }
+.title  { font-style: italic; font-size: 119% }
+.smallCaps  { font-size: 84% }
+.super  { font-size: 71%; vertical-align: top }
+.floater  { float: right; margin-top: 0em; margin-bottom: 1em; margin-left: 2em; margin-right: 1em }
+
+.mL  { margin-left: 2em }
+.mT0  { margin-top: 0.25em }
+.mT  { margin-top: 1.5em }
+.mT2  { margin-top: 2.5em }
+.mB  { margin-bottom: 0.25em }
+.mB2  { margin-bottom: 1.5em }
+.mB3  { margin-bottom: 2.5em }
+.pL  { padding-left: 3ex }
+
+.output  { background-color: #ffffff; border: 2px outset #eeeeee; padding: 2em }
+
+.lineTable  { margin-bottom: 0.75em }
+.lineTable td  { font-size: 84%; padding-right: 2ex; vertical-align: middle }
+
+.imageTable  { margin-right: 1ex }
+.imageTable td  { font-size: 100%; line-height: 0; height: 0.2em; padding: 0ex }
+.yangLine, .yinLine  { background-color: #000000 }
+.yangLine  { width: 2.4em }
+.yinLine  { width: 1em }
+.yinSpace  { width: 0.4em }
+
+.indexTable  { border-collapse: collapse; background-color: #fffff6 }
+.indexTable td  { text-align: center; vertical-align: middle; height: 2em; border: 1px solid #999999 }
+.indexTable td.blank  { background-color: #ffffee; border-style: none;
+	font-size: 89%; text-align: left; padding-left: 1.5em }
+.indexTable a  { font-size: 112%; font-weight: bold; text-decoration: none }
+.imageCellInd  { font-size: 84% }
+.imageTableInd td  { font-size: 100%; line-height: 0; height: 0.2em; border-width: 0px }
+
+.titleInd  { font-style: italic }
+
+.textTable  { border-collapse: collapse; background-color: #fffff6 }
+.textTable td  { text-align: right; vertical-align: middle; border: 1px solid #999999;
+	padding: 0.5ex; padding-left: 1.5ex; padding-right: 1.5ex }
+
+--></style>
+
+</head>
+<body>
+
+
+
+<div style="text-align: center">
+<b>The Virtual Yarrow Stalks I Ching</b>
+</div>
+
+
+
+<br>
+<div id="WuChi" style="position: relative; left: 0px; top: 60px"></div>
+
+
+
+<div style="position: relative; left: 0px; top: 0px"> <!-- main div positioned on top of WuChi //-->
+
+
+
+<table border=0 cellPadding=0 cellSpacing=0>
+<tr>
+<td style="width: 375px" vAlign="bottom">
+
+<table border=0 cellPadding=0 cellSpacing=0 style="margin-left: 5px"><tr>
+<td id="stalkC">&nbsp;</td>
+	<td style="width: 40px">&nbsp;</td>
+<td id="changeC0">&nbsp;</td>
+	<td style="width: 20px">&nbsp;</td>
+<td id="changeC1">&nbsp;</td>
+	<td style="width: 20px">&nbsp;</td>
+<td id="changeC2">&nbsp;</td>
+</tr></table>
+
+</td>
+<td vAlign="bottom">
+
+<table border=0 cellPadding=0 cellSpacing=0><tr>
+<td id="hexagram1C" vAlign="bottom"><span style="display: none">&nbsp;</span></td>
+<td style="width: 40px">&nbsp;</td>
+<td id="hexagram2C" style="visibility: hidden" vAlign="bottom"><span style="display: none">&nbsp;</span></td>
+</tr></table>
+
+</td>
+</tr>
+</table>
+
+<br><br>
+
+
+
+
+
+<div id="infoD" style="display: none">
+
+<p class="mB2 small it">Move your mouse over the stalks, then click on them to divide them into two heaps.<br>
+</p>
+
+<form name="questionForm" class="likeP small it" action="">
+<div class="mB">Question or circumstances (optional):<span id="questionLinks">&nbsp; |&nbsp;
+	<a href="javascript:;" onClick="dateStamp(); return false">Date/time stamp</a>&nbsp; |&nbsp;
+	<a href="javascript:;" onClick="document.questionForm.question.value = ''; return false">Clear</a></span></div>
+<textarea name="question" cols=80 rows=2
+	style="width: 90%; padding: 1ex; overflow: visible"></textarea>
+</form>
+
+<form name="enteredLinesForm" action="" onSubmit="runEnteredLines(); return false" class="mB3 small it">
+<table border=0 cellPadding=0 cellSpacing=0 style="width: 90%"><tr>
+
+<td align="right" vAlign="bottom">
+<div class="mB"><label for="cb1">One moving line</label>&nbsp;
+<input type="checkbox" name="cb" id="cb1">
+</div>&nbsp;
+</td>
+</tr></table>
+</form>
+     <!--
+One moving line should be removed-->
+
+</div>
+
+
+
+
+
+
+<table border=0 cellPadding=0 cellSpacing=0><tr>
+<td id="textC">
+Script loading, please wait . . . .<br>
+<br>
+</td>
+</tr></table>
+
+
+
+
+
+<div id="simplifyD" style="display: none">
+<br>
+<form name="displayForm" class="small it" action="">
+
+<p>Mode: &nbsp;
+<input type="radio" name="m" id="mFT" checked onClick="readTheHexagrams(textCell)"><label
+	for="mFT">&nbsp;Full text</label> &nbsp;
+<input type="radio" name="m" id="mPT" onClick="readTheHexagrams(textCell)"><label
+	for="mPT">&nbsp;Plain text</label> &nbsp; &nbsp; &nbsp;
+<!--<a href="javascript:;" onClick="location.reload(); return false">Reload</a>//-->
+<a href="javascript:;" onClick="resetScript(); return false">Reset</a>
+</p>
+
+<p class="hang">Selection: &nbsp;
+<input type="radio" name="s" id="sB" checked onClick="readTheHexagrams(textCell)"><label
+	for="sB">&nbsp;Basic</label> &nbsp;
+<input type="radio" name="s" id="sEx" onClick="readTheHexagrams(textCell)"><label
+	for="sEx">&nbsp;Extended</label> &nbsp;
+<input type="radio" name="s" id="sAd" onClick="readTheHexagrams(textCell)"><label
+	for="sAd">&nbsp;Advanced</label> &nbsp;
+<input type="radio" name="s" id="sIR" onClick="readTheHexagrams(textCell)"><label
+	for="sIR">&nbsp;Inverted/Reversed</label><br>
+<input type="radio" name="s" id="sMu" onClick="readTheHexagrams(textCell)"><label
+	for="sMu">&nbsp;Mutating</label> &nbsp;
+<input type="radio" name="s" id="sEv" onClick="readTheHexagrams(textCell)"><label
+	for="sEv">&nbsp;Evolutionary</label> &nbsp;
+<input type="radio" name="s" id="sF" onClick="readTheHexagrams(textCell)"><label
+	for="sF">&nbsp;First family</label> &nbsp;
+<input type="radio" name="s" id="sAll" onClick="readTheHexagrams(textCell)"><label
+	for="sAll">&nbsp;All</label>
+</p>
+</form>
+</div>
+ <!--
+Only default options should remain: Full text, basic, Wilhelm/Naynes - radiobuttons should be removed - now if removed it breaks the code-->
+
+
+
+
+
+
+
+
+<form name="translationForm" class="small it" action="">
+Translation: &nbsp;
+<input type="radio" name="t" id="tWB" checked onClick="setTranslation(textCell)"><label
+	for="tWB">&nbsp;Wilhelm/Baynes</label> &nbsp;
+<input type="radio" name="t" id="tNR" onClick="setTranslation(textCell)"><label
+	for="tNR">&nbsp;Richmond</label> &nbsp;
+</form>
+
+
+<!--
+Unable to remove radio button for Richmond-->
+
+<a name="textLink1"></a>
+<br>
+
+
+
+
+<a name="textLink2"></a>
+<br>
+
+<br>
+
+<div id="enterLinesDiv" style="display: none">
+
+<br>
+
+
+<table border=0 cellPadding=0 cellSpacing=0 class="small likeP mL">
+<tr><td align="right">moving yin</td>
+	<td id="cYinCell" class="pL"><span style="display: none">&nbsp;</span></td><td class="pL">6</td></tr>
+<tr><td align="right">yang</td>
+	<td id="yangCell" class="pL"><span style="display: none">&nbsp;</span></td><td class="pL">7</td></tr>
+<tr><td align="right">yin</td>
+	<td id="yinCell" class="pL"><span style="display: none">&nbsp;</span></td><td class="pL">8</td></tr>
+<tr><td align="right">moving yang</td>
+	<td id="cYangCell" class="pL"><span style="display: none">&nbsp;</span></td><td class="pL">9</td></tr>
+</table>
+
+
+</div>
+    
+    <!--
+this div above and its content should be removed - presentlyif the div or the content is removed it breaks the code-->
+
+
+
+
+<a name="textLink3"></a>
+<a name="index"></a>
+<br>
+
+
+<!--
+Link text - Show complet tex-was removed from this line-->
+
+
+<div id="indexTableDiv" style="display: none">
+
+<br>
+
+<table id="theIndexTable" class="indexTable" border=0 cellPadding=2 cellSpacing=0><tbody>
+<tr>
+<td>&nbsp;</td>
+
+<td class="imageCellInd">111</td>
+<td class="imageCellInd">100</td>
+<td class="imageCellInd">010</td>
+<td class="imageCellInd">001</td>
+<td class="imageCellInd">000</td>
+<td class="imageCellInd">011</td>
+<td class="imageCellInd">101</td>
+<td class="imageCellInd">110</td>
+
+<td class="blank">&nbsp;</td>
+</tr>
+
+<tr>
+<td class="imageCellInd">111</td>
+
+<td><a href="#1">1</a></td>
+<td><a href="#34">34</a></td>
+<td><a href="#5">5</a></td>
+<td><a href="#26">26</a></td>
+<td><a href="#11">11</a></td>
+<td><a href="#9">9</a></td>
+<td><a href="#14">14</a></td>
+<td><a href="#43">43</a></td>
+
+<td class="blank"><span title="hexSpan1">Ch’ien:&nbsp; the Creative, heaven</span><span style="display: none"
+	title="hexSpan2">Heaven:&nbsp; masculine, creative, active</span></td>
+</tr>
+
+<tr>
+<td class="imageCellInd">100</td>
+
+<td><a href="#25">25</a></td>
+<td><a href="#51">51</a></td>
+<td><a href="#3">3</a></td>
+<td><a href="#27">27</a></td>
+<td><a href="#24">24</a></td>
+<td><a href="#42">42</a></td>
+<td><a href="#21">21</a></td>
+<td><a href="#17">17</a></td>
+
+<td class="blank"><span title="hexSpan1">Chên:&nbsp; the Arousing, thunder</span><span style="display: none"
+	title="hexSpan2">Thunder:&nbsp; movement, danger</span></td>
+</tr>
+
+<tr>
+<td class="imageCellInd">010</td>
+
+<td><a href="#6">6</a></td>
+<td><a href="#40">40</a></td>
+<td><a href="#29">29</a></td>
+<td><a href="#4">4</a></td>
+<td><a href="#7">7</a></td>
+<td><a href="#59">59</a></td>
+<td><a href="#64">64</a></td>
+<td><a href="#47">47</a></td>
+
+<td class="blank"><span title="hexSpan1">K’an:&nbsp; the Abysmal, water</span><span style="display: none"
+	title="hexSpan2">Water:&nbsp; the moon, a pit, danger</span></td>
+</tr>
+
+<tr>
+<td class="imageCellInd">001</td>
+
+<td><a href="#33">33</a></td>
+<td><a href="#62">62</a></td>
+<td><a href="#39">39</a></td>
+<td><a href="#52">52</a></td>
+<td><a href="#15">15</a></td>
+<td><a href="#53">53</a></td>
+<td><a href="#56">56</a></td>
+<td><a href="#31">31</a></td>
+
+<td class="blank"><span title="hexSpan1">Kên:&nbsp; Keeping Still, mountain</span><span style="display: none"
+	title="hexSpan2">Mountain:&nbsp; stagnation</span></td>
+</tr>
+
+<tr>
+<td class="imageCellInd">000</td>
+
+<td><a href="#12">12</a></td>
+<td><a href="#16">16</a></td>
+<td><a href="#8">8</a></td>
+<td><a href="#23">23</a></td>
+<td><a href="#2">2</a></td>
+<td><a href="#20">20</a></td>
+<td><a href="#35">35</a></td>
+<td><a href="#45">45</a></td>
+
+<td class="blank"><span title="hexSpan1">K’un:&nbsp; the Receptive, earth</span><span style="display: none"
+	title="hexSpan2">Earth:&nbsp; feminine, receptive, passive</span></td>
+</tr>
+
+<tr>
+<td class="imageCellInd">011</td>
+
+<td><a href="#44">44</a></td>
+<td><a href="#32">32</a></td>
+<td><a href="#48">48</a></td>
+<td><a href="#18">18</a></td>
+<td><a href="#46">46</a></td>
+<td><a href="#57">57</a></td>
+<td><a href="#50">50</a></td>
+<td><a href="#28">28</a></td>
+
+<td class="blank"><span title="hexSpan1">Sun:&nbsp; the Gentle, wind, wood</span><span style="display: none"
+	title="hexSpan2">Wind:&nbsp; wood, gentle, penetrating</span></td>
+</tr>
+
+<tr>
+<td class="imageCellInd">101</td>
+
+<td><a href="#13">13</a></td>
+<td><a href="#55">55</a></td>
+<td><a href="#63">63</a></td>
+<td><a href="#22">22</a></td>
+<td><a href="#36">36</a></td>
+<td><a href="#37">37</a></td>
+<td><a href="#30">30</a></td>
+<td><a href="#49">49</a></td>
+
+<td class="blank"><span title="hexSpan1">Li:&nbsp; the Clinging, fire</span><span style="display: none"
+	title="hexSpan2">Fire:&nbsp; the sun, brightness, beauty</span></td>
+</tr>
+
+<tr>
+<td class="imageCellInd">110</td>
+
+<td><a href="#10">10</a></td>
+<td><a href="#54">54</a></td>
+<td><a href="#60">60</a></td>
+<td><a href="#41">41</a></td>
+<td><a href="#19">19</a></td>
+<td><a href="#61">61</a></td>
+<td><a href="#38">38</a></td>
+<td><a href="#58">58</a></td>
+
+<td class="blank"><span title="hexSpan1">Tui:&nbsp; the Joyous, lake</span><span style="display: none"
+	title="hexSpan2">Lake:&nbsp; pleasure, satisfaction</span></td>
+</tr>
+</tbody></table>
+
+</div>
+<!--
+this div above and its content should be removed - presentlyif the div or the content is removed it breaks the code-->
+
+
+
+
+
+<div id="indexListWBDiv" style="display: none">
+
+Ch’ien / The Creative;
+K’un / The Receptive;
+Chun / Difficulty at the Beginning;
+Mêng / Youthful Folly;
+Hsü / Waiting (Nourishment);
+Sung / Conflict;
+Shih / The Army;
+Pi / Holding Together [Union];
+Hsiao Ch’u / The Taming Power of the Small;
+Lü / Treading [Conduct];
+T’ai / Peace;
+P’i / Standstill [Stagnation];
+T’ung Jên / Fellowship with Men;
+Ta Yu / Possession in Great Measure;
+Ch’ien / Modesty;
+Yü / Enthusiasm;
+Sui / Following;
+Ku / Work on What Has Been Spoiled [Decay];
+Lin / Approach;
+Kuan / Contemplation (View);
+Shih Ho / Biting Through;
+Pi / Grace;
+Po / Splitting Apart;
+Fu / Return (The Turning Point);
+Wu Wang / Innocence (The Unexpected);
+Ta Ch’u / The Taming Power of the Great;
+I / The Corners of the Mouth (Providing Nourishment);
+Ta Kuo / Preponderance of the Great;
+K’an / The Abysmal (Water);
+Li / The Clinging, Fire;
+Hsien / Influence (Wooing);
+Hêng / Duration;
+Tun / Retreat;
+Ta Chuang / The Power of the Great;
+Chin / Progress;
+Ming I / Darkening of the Light;
+Chia Jên / The Family [The Clan];
+K’uei / Opposition;
+Chien / Obstruction;
+Hsieh / Deliverance;
+Sun / Decrease;
+I / Increase;
+Kuai / Break-through (Resoluteness);
+Kou / Coming to Meet;
+Ts’ui / Gathering Together [Massing];
+Shêng / Pushing Upward;
+K’un / Oppression (Exhaustion);
+Ching / The Well;
+Ko / Revolution (Molting);
+Ting / The Caldron;
+Chên / The Arousing (Shock, Thunder);
+Kên / Keeping Still, Mountain;
+Chien / Development (Gradual Progress);
+Kuei Mei / The Marrying Maiden;
+Fêng / Abundance [Fullness];
+Lü / The Wanderer;
+Sun / The Gentle (The Penetrating, Wind);
+Tui / The Joyous, Lake;
+Huan / Dispersion [Dissolution];
+Chieh / Limitation;
+Chung Fu / Inner Truth;
+Hsiao Kuo / Preponderance of the Small;
+Chi Chi / After Completion;
+Wei Chi / Before Completion
+
+</div>
+<!--
+this div above and its content should be removed - presentlyif the div or the content is removed it breaks the code-->
+
+
+<div id="indexListNRDiv" style="display: none">
+</div>
+<!--
+this div above should be removed - presentlyif the div or the content is removed it breaks the code-->
+
+
+<div id="indexListGCRDiv" style="display: none">
+</div>
+<!--
+this div above should be removed - presentlyif the div or the content is removed it breaks the code-->
+
+
+
+<!--
+////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////
+//-->
+
+
+
+<div id="WilhelmDiv" style="display: none">
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--textDelimiter//-->
+
+<p>1.&nbsp; <span class="title">Ch’ien / The Creative</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>T<span class="smallCaps">HE CREATIVE</span> works sublime success,<br>
+Furthering through perseverance.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the beginning means:<br>
+Hidden dragon.&nbsp; Do not act.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the second place means:<br>
+Dragon appearing in the field.<br>
+It furthers one to see the great man.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the third place means:<br>
+All day long the superior man is creatively active.<br>
+At nightfall his mind is still beset with cares.<br>
+Danger.&nbsp; No blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fourth place means:<br>
+Wavering flight over the depths.<br>
+No blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fifth place means:<br>
+Flying dragon in the heavens.<br>
+It furthers one to see the great man.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the top means:<br>
+Arrogant dragon will have cause to repent.</p>
+
+<!--lineDelimiter//-->
+
+<p>When all the lines are nines, it means:<br>
+There appears a flight of dragons without heads.<br>
+Good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>2.&nbsp; <span class="title">K’un / The Receptive</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>T<span class="smallCaps">HE RECEPTIVE</span> brings about sublime success,<br>
+Furthering through the perseverance of a mare.<br>
+If the superior man undertakes something and tries to lead,<br>
+He goes astray;<br>
+But if he follows, he finds guidance.<br>
+It is favorable to find friends in the west and south,<br>
+To forego friends in the east and north.<br>
+Quiet perseverance brings good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the beginning means:<br>
+When there is hoarfrost underfoot,<br>
+Solid ice is not far off.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the second place means:<br>
+Straight, square, great.<br>
+Without purpose,<br>
+Yet nothing remains unfurthered.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the third place means:<br>
+Hidden lines.<br>
+One is able to remain persevering.<br>
+If by chance you are in the service of a king,<br>
+Seek not works, but bring to completion.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fourth place means:<br>
+A tied-up sack.&nbsp; No blame, no praise.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fifth place means:<br>
+A yellow lower garment brings supreme good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the top means:<br>
+Dragons fight in the meadow.<br>
+Their blood is black and yellow.</p>
+
+<!--lineDelimiter//-->
+
+<p>When all the lines are sixes, it means:<br>
+Lasting perseverance furthers.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>3.&nbsp; <span class="title">Chun / Difficulty at the Beginning</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>D<span class="smallCaps">IFFICULTY AT THE BEGINNING</span> works supreme success,<br>
+Furthering through perseverance.<br>
+Nothing should be undertaken.<br>
+It furthers one to appoint helpers.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the beginning means:<br>
+Hesitation and hindrance.<br>
+It furthers one to remain persevering.<br>
+It furthers one to appoint helpers.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the second place means:<br>
+Difficulties pile up.<br>
+Horse and wagon part.<br>
+He is not a robber;<br>
+He wants to woo when the time comes.<br>
+The maiden is chaste,<br>
+She does not pledge herself.<br>
+Ten years—then she pledges herself.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the third place means:<br>
+Whoever hunts deer without the forester<br>
+Only loses his way in the forest.<br>
+The superior man understands the signs of the time<br>
+And prefers to desist.<br>
+To go on brings humiliation.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fourth place means:<br>
+Horse and wagon part.<br>
+Strive for union.<br>
+To go brings good fortune.<br>
+Everything acts to further.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fifth place means:<br>
+Difficulties in blessing.<br>
+A little perseverance brings good fortune.<br>
+Great perseverance brings misfortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the top means:<br>
+Horse and wagon part.<br>
+Bloody tears flow.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>4.&nbsp; <span class="title">Mêng / Youthful Folly</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>Y<span class="smallCaps">OUTHFUL FOLLY</span> has success.<br>
+It is not I who seek the young fool;<br>
+The young fool seeks me.<br>
+At the first oracle I inform him.<br>
+If he asks two or three times, it is importunity.<br>
+If he importunes, I give him no information.<br>
+Perseverance furthers.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the beginning means:<br>
+To make a fool develop<br>
+It furthers one to apply discipline.<br>
+The fetters should be removed.<br>
+To go on in this way bring humiliation.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the second place means:<br>
+To bear with fools in kindliness brings good fortune.<br>
+To know how to take women<br>
+Brings good fortune.<br>
+The son is capable of taking charge of the household.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the third place means:<br>
+Take not a maiden who, when she sees a man of bronze,<br>
+Loses possession of herself.<br>
+Nothing furthers.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fourth place means:<br>
+Entangled folly bring humiliation.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fifth place means:<br>
+Childlike folly brings good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the top means:<br>
+In punishing folly<br>
+It does not further one<br>
+To commit transgressions.<br>
+The only thing that furthers<br>
+Is to prevent transgressions.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>5.&nbsp; <span class="title">Hsü / Waiting (Nourishment)</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>W<span class="smallCaps">AITING</span>.&nbsp; If you are sincere,<br>
+You have light and success.<br>
+Perseverance brings good fortune.<br>
+It furthers one to cross the great water.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the beginning means:<br>
+Waiting in the meadow.<br>
+It furthers one to abide in what endures.<br>
+No blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the second place means:<br>
+Waiting on the sand.<br>
+There is some gossip.<br>
+The end brings good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the third place means:<br>
+Waiting in the mud<br>
+Brings about the arrival of the enemy.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fourth place means:<br>
+Waiting in blood.<br>
+Get out of the pit.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fifth place means:<br>
+Waiting at meat and drink.<br>
+Perseverance brings good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the top means:<br>
+One falls into the pit.<br>
+Three uninvited guests arrive.<br>
+Honor them, and in the end there will be good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>6.&nbsp; <span class="title">Sung / Conflict</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>C<span class="smallCaps">ONFLICT</span>.&nbsp; You are sincere<br>
+And are being obstructed.<br>
+A cautious halt halfway brings good fortune.<br>
+Going through to the end brings misfortune.<br>
+It furthers one to see the great man.<br>
+It does not further one to cross the great water.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the beginning means:<br>
+If one does not perpetuate the affair,<br>
+There is a little gossip.<br>
+In the end, good fortune comes.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the second place means:<br>
+One cannot engage in conflict;<br>
+One returns home, gives way.<br>
+The people of his town,<br>
+Three hundred households,<br>
+Remain free of guilt.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the third place means:<br>
+To nourish oneself on ancient virtue induces perseverance.<br>
+Danger.&nbsp; In the end, good fortune comes.<br>
+If by chance you are in the service of a king,<br>
+Seek not works.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fourth place means:<br>
+One cannot engage in conflict.<br>
+One turns back and submits to fate,<br>
+Changes one’s attitude,<br>
+And finds peace in perseverance.<br>
+Good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fifth place means:<br>
+To contend before him<br>
+Brings supreme good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the top means:<br>
+Even if by chance a leather belt is bestowed on one,<br>
+By the end of a morning<br>
+It will have been snatched away three times.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>7.&nbsp; <span class="title">Shih / The Army</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>T<span class="smallCaps">HE ARMY</span>.&nbsp; The army needs perseverance<br>
+And a strong man.<br>
+Good fortune without blame.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the beginning means:<br>
+An army must set forth in proper order.<br>
+If the order is not good, misfortune threatens.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the second place means:<br>
+In the midst of the army.<br>
+Good fortune.&nbsp; No blame.<br>
+The king bestows a triple decoration.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the third place means:<br>
+Perchance the army carries corpses in the wagon.<br>
+Misfortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fourth place means:<br>
+The army retreats.&nbsp; No blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fifth place means:<br>
+There is game in the field.<br>
+It furthers one to catch it.<br>
+Without blame.<br>
+Let the eldest lead the army.<br>
+The younger transports corpses;<br>
+Then perseverance brings misfortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the top means:<br>
+The great prince issues commands,<br>
+Founds states, vests families with fiefs.<br>
+Inferior people should not be employed.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>8.&nbsp; <span class="title">Pi / Holding Together [Union]</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>H<span class="smallCaps">OLDING TOGETHER</span> brings good fortune.<br>
+Inquire of the oracle once again<br>
+Whether you possess sublimity, constancy, and perseverance;<br>
+Then there is no blame.<br>
+Those who are uncertain gradually join.<br>
+Whoever come too late<br>
+Meets with misfortune.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the beginning means:<br>
+Hold to him in truth and loyalty;<br>
+This is without blame.<br>
+Truth, like a full earthen bowl:<br>
+Thus in the end<br>
+Good fortune comes from without.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the second place means:<br>
+Hold to him inwardly.<br>
+Perseverance brings good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the third place means:<br>
+You hold together with the wrong people.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fourth place means:<br>
+Hold to him outwardly also.<br>
+Perseverance brings good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fifth place means:<br>
+Manifestation of holding together.<br>
+In the hunt the king uses beaters on three sides only<br>
+And forgoes game that runs off in front.<br>
+The citizens need no warning.<br>
+Good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the top means:<br>
+He finds no head for holding together.<br>
+Misfortune.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>9.&nbsp; <span class="title">Hsiao Ch’u / The Taming Power of the Small</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>T<span class="smallCaps">HE TAMING POWER OF THE SMALL</span><br>
+Has success.<br>
+Dense clouds, no rain from our western region.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the beginning means:<br>
+Return to the way.<br>
+How could there be blame in this?<br>
+Good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the second place means:<br>
+He allows himself to be drawn into returning.<br>
+Good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the third place means:<br>
+The spokes burst out of the wagon wheels,<br>
+Man and wife roll their eyes.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fourth place means:<br>
+If you are sincere, blood vanishes and fear gives way.<br>
+No blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fifth place means:<br>
+If you are sincere and loyally attached,<br>
+You are rich in your neighbor.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the top means:<br>
+The rain comes, there is rest.<br>
+This is due to the lasting effect of character.<br>
+Perseverance brings the woman into danger.<br>
+The moon is nearly full.<br>
+If the superior man persists,<br>
+Misfortune comes.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>10.&nbsp; <span class="title">Lü / Treading [Conduct]</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>T<span class="smallCaps">READING</span>.&nbsp; Treading upon the tail of the tiger.<br>
+It does not bite the man.&nbsp; Success.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the beginning means:<br>
+Simple conduct.&nbsp; Progress without blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the second place means:<br>
+Treading a smooth, level course.<br>
+The perseverance of a dark man<br>
+Brings good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the third place means:<br>
+A one-eyed man is able to see,<br>
+A lame man is able to tread.<br>
+He treads on the tail of the tiger.<br>
+The tiger bites the man.<br>
+Misfortune.<br>
+Thus does a warrior act on behalf of his great prince.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fourth place means:<br>
+He treads on the tail of the tiger.<br>
+Caution and circumspection<br>
+Lead ultimately to good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fifth place means:<br>
+Resolute conduct.<br>
+Perseverance with awareness of danger.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the top means:<br>
+Look to your conduct and weigh the favorable signs.<br>
+When everything is fulfilled, supreme good fortune comes.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>11.&nbsp; <span class="title">T’ai / Peace</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>P<span class="smallCaps">EACE</span>.&nbsp; The small departs,<br>
+The great approaches.<br>
+Good fortune.&nbsp; Success.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the beginning means:<br>
+When ribbon grass is pulled up, the sod comes with it.<br>
+Each according to his kind.<br>
+Undertakings bring good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the second place means:<br>
+Bearing with the uncultured in gentleness,<br>
+Fording the river with resolution,<br>
+Not neglecting what is distant,<br>
+Not regarding one’s companions:<br>
+Thus one may manage to walk in the middle.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the third place means:<br>
+No plain not followed by a slope.<br>
+No going not followed by a return.<br>
+He who remains persevering in danger<br>
+Is without blame.<br>
+Do not complain about this truth;<br>
+Enjoy the good fortune you still possess.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fourth place means:<br>
+He flutters down, not boasting of his wealth,<br>
+Together with his neighbor,<br>
+Guileless and sincere.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fifth place means:<br>
+The sovereign I<br>
+Gives his daughter in marriage.<br>
+This brings blessing<br>
+And supreme good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the top means:<br>
+The wall falls back into the moat.<br>
+Use no army now.<br>
+Make your commands known within your own town.<br>
+Perseverance brings humiliation.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>12.&nbsp; <span class="title">P’i / Standstill [Stagnation]</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>S<span class="smallCaps">TANDSTILL</span>.&nbsp; Evil people do not further<br>
+The perseverance of the superior man.<br>
+The great departs; the small approaches.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the beginning means:<br>
+When ribbon grass is pulled up, the sod comes with it.<br>
+Each according to his kind.<br>
+Perseverance brings good fortune and success.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the second place means:<br>
+They bear and endure;<br>
+This means good fortune for inferior people.<br>
+The standstill serves to help the great man to attain success.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the third place means:<br>
+They bear shame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fourth place means:<br>
+He who acts at the command of the highest<br>
+Remains without blame.<br>
+Those of like mind partake of the blessing.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fifth place means:<br>
+Standstill is giving way.<br>
+Good fortune for the great man.<br>
+“What if it should fail, what if it should fail?”<br>
+In this way he ties it to a cluster of mulberry shoots.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the top means:<br>
+The standstill comes to an end.<br>
+First standstill, then good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>13.&nbsp; <span class="title">T’ung Jên / Fellowship with Men</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>F<span class="smallCaps">ELLOWSHIP WITH MEN</span> in the open.<br>
+Success.<br>
+It furthers one to cross the great water.<br>
+The perseverance of the superior man furthers.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the beginning means:<br>
+Fellowship with men at the gate.<br>
+No blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the second place means:<br>
+Fellowship with men in the clan.<br>
+Humiliation.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the third place means:<br>
+He hides weapons in the thicket;<br>
+He climbs the high hill in front of it.<br>
+For three years he does not rise up.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fourth place means:<br>
+He climbs up on his wall; he cannot attack.<br>
+Good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fifth place means:<br>
+Men bound in fellowship first weep and lament,<br>
+But afterward they laugh.<br>
+After great struggles they succeed in meeting.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the top means:<br>
+Fellowship with men in the meadow.<br>
+No remorse.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>14.&nbsp; <span class="title">Ta Yu / Possession in Great Measure</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>P<span class="smallCaps">OSSESSION IN GREAT MEASURE</span>.<br>
+Supreme success.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the beginning means:<br>
+No relationship with what is harmful;<br>
+There is no blame in this.<br>
+If one remains conscious of difficulty,<br>
+One remains without blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the second place means:<br>
+A big wagon for loading.<br>
+One may undertake something.<br>
+No blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the third place means:<br>
+A prince offers it to the Son of Heaven.<br>
+A petty man cannot do this.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fourth place means:<br>
+He makes a difference<br>
+Between himself and his neighbor.<br>
+No blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fifth place means:<br>
+He whose truth is accessible, yet dignified,<br>
+Has good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the top means:<br>
+He is blessed by heaven.<br>
+Good fortune.<br>
+Nothing that does not further.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>15.&nbsp; <span class="title">Ch’ien / Modesty</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>M<span class="smallCaps">ODESTY</span> creates success.<br>
+The superior man carries things through.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the beginning means:<br>
+A superior man modest about his modesty<br>
+May cross the great water.<br>
+Good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the second place means:<br>
+Modesty that comes to expression.<br>
+Perseverance brings good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the third place means:<br>
+A superior man of modesty and merit<br>
+Carries things to conclusion.<br>
+Good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fourth place means:<br>
+Nothing that would not further modesty<br>
+In movement.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fifth place means:<br>
+No boasting of wealth before one’s neighbor.<br>
+It is favorable to attack with force.<br>
+Nothing that would not further.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the top means:<br>
+Modesty that comes to expression.<br>
+It is favorable to set armies marching<br>
+To chastise one’s own city and one’s country.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>16.&nbsp; <span class="title">Yü / Enthusiasm</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>E<span class="smallCaps">NTHUSIASM</span>.&nbsp; It furthers one to install helpers<br>
+And to set armies marching.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the beginning means:<br>
+Enthusiasm that expresses itself<br>
+Brings misfortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the second place means:<br>
+Firm as a rock.&nbsp; Not a whole day.<br>
+Perseverance brings good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the third place means:<br>
+Enthusiasm that looks upward creates remorse.<br>
+Hesitation brings remorse.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fourth place means:<br>
+The source of enthusiasm.<br>
+He achieves great things.<br>
+Doubt not.<br>
+You gather friends around you<br>
+As a hair clasp gathers the hair.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fifth place means:<br>
+Persistently ill, and still does not die.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the top means:<br>
+Deluded enthusiasm.<br>
+But if after completion one changes,<br>
+There is no blame.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>17.&nbsp; <span class="title">Sui / Following</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>F<span class="smallCaps">OLLOWING</span> has supreme success.<br>
+Perseverance furthers.&nbsp; No blame.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the beginning means:<br>
+The standard is changing.<br>
+Perseverance brings good fortune.<br>
+To go out of the door in company<br>
+Produces deeds.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the second place means:<br>
+If one clings to the little boy,<br>
+One loses the strong man.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the third place means:<br>
+If one clings to the strong man,<br>
+One loses the little boy.<br>
+Through following one finds what one seeks.<br>
+It furthers one to remain persevering.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fourth place means:<br>
+Following creates success.<br>
+Perseverance brings misfortune.<br>
+To go one’s way with sincerity brings clarity.<br>
+How could there be blame in this?</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fifth place means:<br>
+Sincere in the good.&nbsp; Good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the top means:<br>
+He meets with firm allegiance<br>
+And is still further bound.<br>
+The king introduces him<br>
+To the Western Mountain.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>18.&nbsp; <span class="title">Ku / Work on What Has Been Spoiled [Decay]</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>W<span class="smallCaps">ORK ON WHAT HAS BEEN SPOILED</span><br>
+Has supreme success.<br>
+It furthers one to cross the great water.<br>
+Before the starting point, three days.<br>
+After the starting point, three days.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the beginning means:<br>
+Setting right what has been spoiled by the father.<br>
+If there is a son,<br>
+No blame rests upon the departed father.<br>
+Danger.&nbsp; In the end good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the second place means:<br>
+Setting right what has been spoiled by the mother.<br>
+One must not be too persevering.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the third place means:<br>
+Setting right what has been spoiled by the father.<br>
+There will be a little remorse.&nbsp; No great blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fourth place means:<br>
+Tolerating what has been spoiled by the father.<br>
+In continuing one sees humiliation.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fifth place means:<br>
+Setting right what has been spoiled by the father.<br>
+One meets with praise.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the top means:<br>
+He does not serve kings and princes,<br>
+Sets himself higher goals.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>19.&nbsp; <span class="title">Lin / Approach</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>A<span class="smallCaps">PPROACH</span> has supreme success.<br>
+Perseverance furthers.<br>
+When the eighth month comes,<br>
+There will be misfortune.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the beginning means:<br>
+Joint approach.<br>
+Perseverance brings good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the second place means:<br>
+Joint approach.<br>
+Good fortune.<br>
+Everything furthers.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the third place means:<br>
+Comfortable approach.<br>
+Nothing that would further.<br>
+If one is induced to grieve over it,<br>
+One becomes free of blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fourth place means:<br>
+Complete approach.<br>
+No blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fifth place means:<br>
+Wise approach.<br>
+This is right for a great prince.<br>
+Good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the top means:<br>
+Greathearted approach.<br>
+Good fortune.&nbsp; No blame.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>20.&nbsp; <span class="title">Kuan / Contemplation (View)</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>C<span class="smallCaps">ONTEMPLATION</span>.&nbsp; The ablution has been made,<br>
+But not yet the offering.<br>
+Full of trust they look up to him.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the beginning means:<br>
+Boylike contemplation.<br>
+For an inferior man, no blame.<br>
+For a superior man, humiliation.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the second place means:<br>
+Contemplation through the crack of the door.<br>
+Furthering for the perseverance of a woman.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the third place means:<br>
+Contemplation of my life<br>
+Decides the choice<br>
+Between advance and retreat.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fourth place means:<br>
+Contemplation of the light of the kingdom.<br>
+It furthers one to exert influence as the guest of a king.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fifth place means:<br>
+Contemplation of my life.<br>
+The superior man is without blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the top means:<br>
+Contemplation of his life.<br>
+The superior man is without blame.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>21.&nbsp; <span class="title">Shih Ho / Biting Through</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>B<span class="smallCaps">ITING THROUGH</span> has success.<br>
+It is favorable to let justice be administered.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the beginning means:<br>
+His feet are fastened in the stocks,<br>
+So that his toes disappear.<br>
+No blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the second place means:<br>
+Bites through tender meat,<br>
+So that his nose disappears.<br>
+No blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the third place means:<br>
+Bites on old dried meat<br>
+And strikes on something poisonous.<br>
+Slight humiliation.&nbsp; No blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fourth place means:<br>
+Bites on dried gristly meat.<br>
+Receives metal arrows.<br>
+It furthers one to be mindful of difficulties<br>
+And to be persevering.<br>
+Good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fifth place means:<br>
+Bites on dried lean meat.<br>
+Receives yellow gold.<br>
+Perseveringly aware of danger.<br>
+No blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the top means:<br>
+His neck is fastened in the wooden cangue,<br>
+So that his ears disappear.<br>
+Misfortune.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>22.&nbsp; <span class="title">Pi / Grace</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>G<span class="smallCaps">RACE</span> has success.<br>
+In small matters<br>
+It is favorable to undertake something.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the beginning means:<br>
+He lends grace to his toes, leaves the carriage, and walks.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the second place means:<br>
+Lends grace to the beard on his chin.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the third place means:<br>
+Graceful and moist.<br>
+Constant perseverance brings good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fourth place means:<br>
+Grace or simplicity?<br>
+A white horse comes as if on wings.<br>
+He is not a robber,<br>
+He will woo at the right time.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fifth place means:<br>
+Grace in hills and gardens.<br>
+The roll of silk is meager and small.<br>
+Humiliation, but in the end good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the top means:<br>
+Simple grace.&nbsp; No blame.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>23.&nbsp; <span class="title">Po / Splitting Apart</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>S<span class="smallCaps">PLITTING APART</span>.&nbsp; It does not further one<br>
+To go anywhere.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the beginning means:<br>
+The leg of the bed is split.<br>
+Those who persevere are destroyed.<br>
+Misfortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the second place means:<br>
+The bed is split at the edge.<br>
+Those who persevere are destroyed.<br>
+Misfortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the third place means:<br>
+He splits with them.&nbsp; No blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fourth place means:<br>
+The bed is split up to the skin.<br>
+Misfortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fifth place means:<br>
+A shoal of fishes.&nbsp; Favor comes through the court ladies.<br>
+Everything acts to further.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the top means:<br>
+There is a large fruit still uneaten.<br>
+The superior man receives a carriage.<br>
+The house of the inferior man is split apart.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>24.&nbsp; <span class="title">Fu / Return (The Turning Point)</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>R<span class="smallCaps">ETURN</span>.&nbsp; Success.<br>
+Going out and coming in without error.<br>
+Friends come without blame.<br>
+To and fro goes the way.<br>
+On the seventh day comes return.<br>
+It furthers one to have somewhere to go.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the beginning means:<br>
+Return from a short distance.<br>
+No need for remorse.<br>
+Great good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the second place means:<br>
+Quiet return.&nbsp; Good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the third place means:<br>
+Repeated return.&nbsp; Danger.&nbsp; No blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fourth place means:<br>
+Walking in the midst of others,<br>
+One returns alone.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fifth place means:<br>
+Noblehearted return.&nbsp; No remorse.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the top means:<br>
+Missing the return.&nbsp; Misfortune.<br>
+Misfortune from within and without.<br>
+If armies are set marching in this way,<br>
+One will in the end suffer a great defeat,<br>
+Disastrous for the ruler of the country.<br>
+For ten years<br>
+It will not be possible to attack again.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>25.&nbsp; <span class="title">Wu Wang / Innocence (The Unexpected)</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>I<span class="smallCaps">NNOCENCE</span>.&nbsp; Supreme success.<br>
+Perseverance furthers.<br>
+If someone is not as he should be,<br>
+He has misfortune,<br>
+And it does not further him<br>
+To undertake anything.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the beginning means:<br>
+Innocent behavior brings good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the second place means:<br>
+If one does not count on the harvest while plowing,<br>
+Nor on the use of the ground while clearing it,<br>
+It furthers one to undertake something.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the third place means:<br>
+Undeserved misfortune.<br>
+The cow that was tethered by someone<br>
+Is the wanderer’s gain, the citizen’s loss.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fourth place means:<br>
+He who can be persevering<br>
+Remains without blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fifth place means:<br>
+Use no medicine in an illness<br>
+Incurred through no fault of your own.<br>
+It will pass of itself.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the top means:<br>
+Innocent action brings misfortune.<br>
+Nothing furthers.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>26.&nbsp; <span class="title">Ta Ch’u / The Taming Power of the Great</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>T<span class="smallCaps">HE TAMING POWER OF THE GREAT</span>.<br>
+Perseverance furthers.<br>
+Not eating at home brings good fortune.<br>
+It furthers one to cross the great water.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the beginning means:<br>
+Danger is at hand.&nbsp; It furthers one to desist.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the second place means:<br>
+The axletrees are taken from the wagon.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the third place means:<br>
+A good horse that follows others.<br>
+Awareness of danger,<br>
+With perseverance, furthers.<br>
+Practice chariot driving and armed defense daily.<br>
+It furthers one to have somewhere to go.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fourth place means:<br>
+The headboard of a young bull.<br>
+Great good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fifth place means:<br>
+The tusk of a gelded boar.<br>
+Good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the top means:<br>
+One attains the way of heaven.&nbsp; Success.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>27.&nbsp; <span class="title">I / The Corners of the Mouth (Providing Nourishment)</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>T<span class="smallCaps">HE CORNERS OF THE MOUTH</span>.<br>
+Perseverance brings good fortune.<br>
+Pay heed to the providing of nourishment<br>
+And to what a man seeks<br>
+To fill his own mouth with.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the beginning means:<br>
+You let your magic tortoise go,<br>
+And look at me with the corners of your mouth drooping.<br>
+Misfortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the second place means:<br>
+Turning to the summit for nourishment,<br>
+Deviating from the path<br>
+To seek nourishment from the hill.<br>
+Continuing to do this brings misfortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the third place means:<br>
+Turning away from nourishment.<br>
+Perseverance brings misfortune.<br>
+Do not act thus for ten years.<br>
+Nothing serves to further.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fourth place means:<br>
+Turning to the summit<br>
+For provision of nourishment<br>
+Brings good fortune.<br>
+Spying about with sharp eyes<br>
+Like a tiger with insatiable craving.<br>
+No blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fifth place means:<br>
+Turning away from the path.<br>
+To remain persevering brings good fortune.<br>
+One should not cross the great water.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the top means:<br>
+The source of nourishment.<br>
+Awareness of danger brings good fortune.<br>
+It furthers one to cross the great water.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>28.&nbsp; <span class="title">Ta Kuo / Preponderance of the Great</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>P<span class="smallCaps">REPONDERANCE OF THE GREAT</span>.<br>
+The ridgepole sags to the breaking point.<br>
+It furthers one to have somewhere to go.<br>
+Success.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the beginning means:<br>
+To spread white rushes underneath.<br>
+No blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the second place means:<br>
+A dry poplar sprouts at the root.<br>
+An older man takes a young wife.<br>
+Everything furthers.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the third place means:<br>
+The ridgepole sags to the breaking point.<br>
+Misfortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fourth place means:<br>
+The ridgepole is braced.&nbsp; Good fortune.<br>
+If there are ulterior motives, it is humiliating.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fifth place means:<br>
+A withered poplar puts forth flowers.<br>
+An older woman takes a husband.<br>
+No blame.&nbsp; No praise.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the top means:<br>
+One must go through the water.<br>
+It goes over one’s head.<br>
+Misfortune.&nbsp; No blame.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>29.&nbsp; <span class="title">K’an / The Abysmal (Water)</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>The Abysmal repeated.<br>
+If you are sincere, you have success in your heart,<br>
+And whatever you do succeeds.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the beginning means:<br>
+Repetition of the Abysmal.<br>
+In the abyss one falls into a pit.<br>
+Misfortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the second place means:<br>
+The abyss is dangerous.<br>
+One should strive to attain small things only.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the third place means:<br>
+Forward and backward, abyss on abyss.<br>
+In danger like this, pause at first and wait,<br>
+Otherwise you will fall into a pit in the abyss.<br>
+Do not act this way.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fourth place means:<br>
+A jug of wine, a bowl of rice with it;<br>
+Earthen vessels<br>
+Simply handed in through the window.<br>
+There is certainly no blame in this.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fifth place means:<br>
+The abyss is not filled to overflowing,<br>
+It is filled only to the rim.<br>
+No blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the top means:<br>
+Bound with cords and ropes,<br>
+Shut in between thorn-hedged prison walls:<br>
+For three years one does not find the way.<br>
+Misfortune.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>30.&nbsp; <span class="title">Li / The Clinging, Fire</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>T<span class="smallCaps">HE CLINGING</span>.&nbsp; Perseverance furthers.<br>
+It brings success.<br>
+Care of the cow brings good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the beginning means:<br>
+The footprints run crisscross.<br>
+If one is seriously intent, no blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the second place means:<br>
+Yellow light.&nbsp; Supreme good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the third place means:<br>
+In the light of the setting sun,<br>
+Men either beat the pot and sing<br>
+Or loudly bewail the approach of old age.<br>
+Misfortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fourth place means:<br>
+Its coming is sudden;<br>
+It flames up, dies down, is thrown away.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fifth place means:<br>
+Tears in floods, sighing and lamenting.<br>
+Good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the top means:<br>
+The king uses him to march forth and chastise.<br>
+Then it is best to kill the leaders<br>
+And take captive the followers.&nbsp; No blame.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>31.&nbsp; <span class="title">Hsien / Influence (Wooing)</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>Influence.&nbsp; Success.<br>
+Perseverance furthers.<br>
+To take a maiden to wife brings good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the beginning means:<br>
+The influence shows itself in the big toe.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the second place means:<br>
+The influence shows itself in the calves of the legs.<br>
+Misfortune.<br>
+Tarrying brings good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the third place means:<br>
+The influence shows itself in the thighs.<br>
+Holds to that which follows it.<br>
+To continue is humiliating.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fourth place means:<br>
+Perseverance brings good fortune.<br>
+Remorse disappears.<br>
+If a man is agitated in mind,<br>
+And his thoughts go hither and thither,<br>
+Only those friends<br>
+On whom he fixes his conscious thoughts<br>
+Will follow.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fifth place means:<br>
+The influence shows itself in the back of the neck.<br>
+No remorse.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the top means:<br>
+The influence shows itself in the jaws, cheeks, and tongue.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>32.&nbsp; <span class="title">Hêng / Duration</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>D<span class="smallCaps">URATION</span>.&nbsp; Success.&nbsp; No blame.<br>
+Perseverance furthers.<br>
+It furthers one to have somewhere to go.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the beginning means:<br>
+Seeking duration too hastily brings misfortune persistently.<br>
+Nothing that would further.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the second place means:<br>
+Remorse disappears.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the third place means:<br>
+He who does not give duration to his character<br>
+Meets with disgrace.<br>
+Persistent humiliation.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fourth place means:<br>
+No game in the field.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fifth place means:<br>
+Giving duration to one’s character through perseverance.<br>
+This is good fortune for a woman, misfortune for a man.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the top means:<br>
+Restlessness as an enduring condition brings misfortune.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>33.&nbsp; <span class="title">Tun / Retreat</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>R<span class="smallCaps">ETREAT</span>.&nbsp; Success.<br>
+In what is small, perseverance furthers.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the beginning means:<br>
+At the tail in retreat.&nbsp; This is dangerous.<br>
+One must not wish to undertake anything.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the second place means:<br>
+He holds him fast with yellow oxhide.<br>
+No one can tear him loose.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the third place means:<br>
+A halted retreat<br>
+Is nerve-wracking and dangerous.<br>
+To retain people as men—and maidservants<br>
+Brings good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fourth place means:<br>
+Voluntary retreat brings good fortune to the superior man<br>
+And downfall to the inferior man.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fifth place means:<br>
+Friendly retreat.&nbsp; Perseverance brings good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the top means:<br>
+Cheerful retreat.&nbsp; Everything serves to further.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>34.&nbsp; <span class="title">Ta Chuang / The Power of the Great</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>T<span class="smallCaps">HE POWER OF THE GREAT</span>.&nbsp; Perseverance furthers.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the beginning means:<br>
+Power in the toes.<br>
+Continuing brings misfortune.<br>
+This is certainly true.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the second place means:<br>
+Perseverance brings good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the third place means:<br>
+The inferior man works through power.<br>
+The superior man does not act thus.<br>
+To continue is dangerous.<br>
+A goat butts against a hedge<br>
+And gets its horns entangled.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fourth place means:<br>
+Perseverance brings good fortune.<br>
+Remorse disappears.<br>
+The hedge opens; there is no entanglement.<br>
+Power depends upon the axle of a big cart.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fifth place means:<br>
+Loses the goat with ease.<br>
+No remorse.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the top means:<br>
+A goat butts against a hedge.<br>
+It cannot go backward, it cannot go forward.<br>
+Nothing serves to further.<br>
+If one notes the difficulty, this brings good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>35.&nbsp; <span class="title">Chin / Progress</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>P<span class="smallCaps">ROGRESS</span>.&nbsp; The powerful prince<br>
+Is honored with horses in large numbers.<br>
+In a single day he is granted audience three times.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the beginning means:<br>
+Progressing, but turned back.<br>
+Perseverance brings good fortune.<br>
+If one meets with no confidence, one should remain calm.<br>
+No mistake.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the second place means:<br>
+Progressing, but in sorrow.<br>
+Perseverance brings good fortune.<br>
+Then one obtains great happiness from one’s ancestress.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the third place means:<br>
+All are in accord.&nbsp; Remorse disappears.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fourth place means:<br>
+Progress like a hamster.<br>
+Perseverance brings danger.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fifth place means:<br>
+Remorse disappears.<br>
+Take not gain and loss to heart.<br>
+Undertakings bring good fortune.<br>
+Everything serves to further.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the top means:<br>
+Making progress with the horns is permissible<br>
+Only for the purpose of punishing one’s own city.<br>
+To be conscious of danger brings good fortune.<br>
+No blame.<br>
+Perseverance brings humiliation.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>36.&nbsp; <span class="title">Ming I / Darkening of the Light</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>D<span class="smallCaps">ARKENING OF THE LIGHT</span>.&nbsp; In adversity<br>
+It furthers one to be persevering.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the beginning means:<br>
+Darkening of the light during flight.<br>
+He lowers his wings.<br>
+The superior man does not eat for three days<br>
+On his wanderings.<br>
+But he has somewhere to go.<br>
+The host has occasion to gossip about him.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the second place means:<br>
+Darkening of the light injures him in the left thigh.<br>
+He gives aid with the strength of a horse.<br>
+Good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the third place means:<br>
+Darkening of the light during the hunt in the south.<br>
+Their great leader is captured.<br>
+One must not expect perseverance too soon.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fourth place means:<br>
+He penetrates the left side of the belly.<br>
+One gets at the very heart of the darkening of the light<br>
+And leaves gate and courtyard.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fifth place means:<br>
+Darkening of the light as with Prince Chi.<br>
+Perseverance furthers.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the top means:<br>
+Not light but darkness.<br>
+First he climbed up to heaven,<br>
+Then he plunged into the depths of the earth.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>37.&nbsp; <span class="title">Chia Jên / The Family [The Clan]</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>T<span class="smallCaps">HE FAMILY</span>.&nbsp; The perseverance of the woman furthers.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the beginning means:<br>
+Firm seclusion within the family.<br>
+Remorse disappears.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the second place means:<br>
+She should not follow her whims.<br>
+She must attend within to the food.<br>
+Perseverance brings good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the third place means:<br>
+When tempers flare up in the family,<br>
+Too great severity brings remorse.<br>
+Good fortune nonetheless.<br>
+When woman and child dally and laugh<br>
+It leads in the end to humiliation.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fourth place means:<br>
+She is the treasure of the house.<br>
+Great good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fifth place means:<br>
+As a king he approaches his family.<br>
+Fear not.<br>
+Good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the top means:<br>
+His work commands respect.<br>
+In the end good fortune comes.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>38.&nbsp; <span class="title">K’uei / Opposition</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>O<span class="smallCaps">PPOSITION</span>.&nbsp; In small matters, good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the beginning means:<br>
+Remorse disappears.<br>
+If you lose your horse, do not run after it;<br>
+It will come back of its own accord.<br>
+When you see evil people,<br>
+Guard yourself against mistakes.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the second place means:<br>
+One meets his lord in a narrow street.<br>
+No blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the third place means:<br>
+One sees the wagon dragged back,<br>
+The oxen halted,<br>
+A man’s hair and nose cut off.<br>
+Not a good beginning, but a good end.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fourth place means:<br>
+Isolated through opposition,<br>
+One meets a like-minded man<br>
+With whom one can associate in good faith.<br>
+Despite the danger, no blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fifth place means:<br>
+Remorse disappears.<br>
+The companion bites his way through the wrappings.<br>
+If one goes to him,<br>
+How could it be a mistake?</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the top means:<br>
+Isolated through opposition,<br>
+One sees one’s companion as a pig covered with dirt,<br>
+As a wagon full of devils.<br>
+First one draws a bow against him,<br>
+Then one lays the bow aside.<br>
+He is not a robber; he will woo at the right time.<br>
+As one goes, rain falls; then good fortune comes.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>39.&nbsp; <span class="title">Chien / Obstruction</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>O<span class="smallCaps">BSTRUCTION</span>.&nbsp; The southwest furthers.<br>
+The northeast does not further.<br>
+It furthers one to see the great man.<br>
+Perseverance brings good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the beginning means:<br>
+Going leads to obstructions,<br>
+Coming meets with praise.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the second place means:<br>
+The king’s servant is beset by obstruction upon obstruction,<br>
+But it is not his own fault.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the third place means:<br>
+Going leads to obstructions;<br>
+Hence he comes back.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fourth place means:<br>
+Going leads to obstructions,<br>
+Coming leads to union.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fifth place means:<br>
+In the midst of the greatest obstructions,<br>
+Friends come.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the top means:<br>
+Going leads to obstructions,<br>
+Coming leads to great good fortune.<br>
+It furthers one to see the great man.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>40.&nbsp; <span class="title">Hsieh / Deliverance</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>D<span class="smallCaps">ELIVERANCE</span>.&nbsp; The southwest furthers.<br>
+If there is no longer anything where one has to go,<br>
+Return brings good fortune.<br>
+If there is still something where one has to go,<br>
+Hastening brings good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the beginning means:<br>
+Without blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the second place means:<br>
+One kills three foxes in the field<br>
+And receives a yellow arrow.<br>
+Perseverance brings good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the third place means:<br>
+If a man carries a burden on his back<br>
+And nonetheless rides in a carriage,<br>
+He thereby encourages robbers to draw near.<br>
+Perseverance leads to humiliation.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fourth place means:<br>
+Deliver yourself from your great toe.<br>
+Then the companion comes,<br>
+And him you can trust.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fifth place means:<br>
+If only the superior man can deliver himself,<br>
+It brings good fortune.<br>
+Thus he proves to inferior men that he is in earnest.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the top means:<br>
+The prince shoots at a hawk on a high wall.<br>
+He kills it.&nbsp; Everything serves to further.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>41.&nbsp; <span class="title">Sun / Decrease</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>D<span class="smallCaps">ECREASE</span> combined with sincerity<br>
+Brings about supreme good fortune<br>
+Without blame.<br>
+One may be persevering in this.<br>
+It furthers one to undertake something.<br>
+How is this to be carried out?<br>
+One may use two small bowls for the sacrifice.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the beginning means:<br>
+Going quickly when one’s tasks are finished<br>
+Is without blame.<br>
+But one must reflect on how much one may decrease others.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the second place means:<br>
+Perseverance furthers.<br>
+To undertake something brings misfortune.<br>
+Without decreasing oneself,<br>
+One is able to bring increase to others.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the third place means:<br>
+When three people journey together,<br>
+Their number decreases by one.<br>
+When one man journeys alone,<br>
+He finds a companion.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fourth place means:<br>
+If a man decreases his faults,<br>
+It makes the other hasten to come and rejoice.<br>
+No blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fifth place means:<br>
+Someone does indeed increase him.<br>
+Ten pairs of tortoises cannot oppose it.<br>
+Supreme good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the top means:<br>
+If one is increased without depriving others,<br>
+There is no blame.<br>
+Perseverance brings good fortune.<br>
+It furthers one to undertake something.<br>
+One obtains servants<br>
+But no longer has a separate home.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>42.&nbsp; <span class="title">I / Increase</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>I<span class="smallCaps">NCREASE</span>.&nbsp; It furthers one<br>
+To undertake something.<br>
+It furthers one to cross the great water.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the beginning means:<br>
+It furthers one to accomplish great deeds.<br>
+Supreme good fortune.&nbsp; No blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the second place means:<br>
+Someone does indeed increase him;<br>
+Ten pairs of tortoises cannot oppose it.<br>
+Constant perseverance brings good fortune.<br>
+The king presents him before God.<br>
+Good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the third place means:<br>
+One is enriched through unfortunate events.<br>
+No blame, if you are sincere<br>
+And walk in the middle,<br>
+And report with a seal to the prince.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fourth place means:<br>
+If you walk in the middle<br>
+And report to the prince,<br>
+He will follow.<br>
+It furthers one to be used<br>
+In the removal of the capital.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fifth place means:<br>
+If in truth you have a kind heart, ask not.<br>
+Supreme good fortune.<br>
+Truly, kindness will be recognized as your virtue.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the top means:<br>
+He brings increase to no one.<br>
+Indeed, someone even strikes him.<br>
+He does not keep his heart constantly steady.<br>
+Misfortune.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>43.&nbsp; <span class="title">Kuai / Break-through (Resoluteness)</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>B<span class="smallCaps">REAK-THROUGH</span>.&nbsp; One must resolutely make the matter known<br>
+At the court of the king.<br>
+It must be announced truthfully.&nbsp; Danger.<br>
+It is necessary to notify one’s own city.<br>
+It does not further to resort to arms.<br>
+It furthers one to undertake something.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the beginning means:<br>
+Mighty in the forward-striding toes.<br>
+When one goes and is not equal to the task,<br>
+One makes a mistake.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the second place means:<br>
+A cry of alarm.&nbsp; Arms at evening and at night.<br>
+Fear nothing.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the third place means:<br>
+To be powerful in the cheekbones<br>
+Brings misfortune.<br>
+The superior man is firmly resolved.<br>
+He walks alone and is caught in the rain.<br>
+He is bespattered,<br>
+And people murmur against him.<br>
+No blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fourth place means:<br>
+There is no skin on his thighs,<br>
+And walking comes hard.<br>
+If a man were to let himself be led like a sheep,<br>
+Remorse would disappear.<br>
+But if these words are heard<br>
+They will not be believed.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fifth place means:<br>
+In dealing with weeds,<br>
+Firm resolution is necessary.<br>
+Walking in the middle<br>
+Remains free of blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the top means:<br>
+No cry.<br>
+In the end misfortune comes.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>44.&nbsp; <span class="title">Kou / Coming to Meet</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>C<span class="smallCaps">OMING TO MEET</span>.&nbsp; The maiden is powerful.<br>
+One should not marry such a maiden.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the beginning means:<br>
+It must be checked with a brake of bronze.<br>
+Perseverance brings good fortune.<br>
+If one lets it take its course, one experiences misfortune.<br>
+Even a lean pig has it in him to rage around.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the second place means:<br>
+There is a fish in the tank.&nbsp; No blame.<br>
+Does not further guests.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the third place means:<br>
+There is no skin on his thighs,<br>
+And walking comes hard.<br>
+If one is mindful of the danger,<br>
+No great mistake is made.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fourth place means:<br>
+No fish in the tank.<br>
+This leads to misfortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fifth place means:<br>
+A melon covered with willow leaves.<br>
+Hidden lines.<br>
+Then it drops down to one from heaven.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the top means:<br>
+He comes to meet with his horns.<br>
+Humiliation.&nbsp; No blame.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>45.&nbsp; <span class="title">Ts’ui / Gathering Together [Massing]</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>G<span class="smallCaps">ATHERING TOGETHER</span>.&nbsp; Success.<br>
+The king approaches his temple.<br>
+It furthers one to see the great man.<br>
+This brings success.&nbsp; Perseverance furthers.<br>
+To bring great offerings creates good fortune.<br>
+It furthers one to undertake something.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the beginning means:<br>
+If you are sincere, but not to the end,<br>
+There will sometimes be confusion, sometimes gathering together.<br>
+If you call out,<br>
+Then after one grasp of the hand you can laugh again.<br>
+Regret not.&nbsp; Going is without blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the second place means:<br>
+Letting oneself be drawn<br>
+Brings good fortune and remains blameless.<br>
+If one is sincere,<br>
+It furthers one to bring even a small offering.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the third place means:<br>
+Gathering together amid sighs.<br>
+Nothing that would further.<br>
+Going is without blame.<br>
+Slight humiliation.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fourth place means:<br>
+Great good fortune.&nbsp; No blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fifth place means:<br>
+If in gathering together one has position,<br>
+This brings no blame.<br>
+If there are some who are not yet sincerely in the work,<br>
+Sublime and enduring perseverance is needed.<br>
+Then remorse disappears.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the top means:<br>
+Lamenting and sighing, floods of tears.<br>
+No blame.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>46.&nbsp; <span class="title">Shêng / Pushing Upward</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>P<span class="smallCaps">USHING UPWARD</span> has supreme success.<br>
+One must see the great man.<br>
+Fear not.<br>
+Departure toward the south<br>
+Brings good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the beginning means:<br>
+Pushing upward that meets with confidence<br>
+Brings great good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the second place means:<br>
+If one is sincere,<br>
+It furthers one to bring even a small offering.<br>
+No blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the third place means:<br>
+One pushes upward into an empty city.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fourth place means:<br>
+The king offers him Mount Ch’i.<br>
+Good fortune.&nbsp; No blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fifth place means:<br>
+Perseverance brings good fortune.<br>
+One pushes upward by steps.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the top means:<br>
+Pushing upward in darkness.<br>
+It furthers one<br>
+To be unremittingly persevering.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>47.&nbsp; <span class="title">K’un / Oppression (Exhaustion)</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>O<span class="smallCaps">PPRESSION</span>.&nbsp; Success.&nbsp; Perseverance.<br>
+The great man brings about good fortune.<br>
+No blame.<br>
+When one has something to say,<br>
+It is not believed.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the beginning means:<br>
+One sits oppressed under a bare tree<br>
+And strays into a gloomy valley.<br>
+For three years one sees nothing.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the second place means:<br>
+One is oppressed while at meat and drink.<br>
+The man with the scarlet knee bands is just coming.<br>
+It furthers one to offer sacrifice.<br>
+To set forth brings misfortune.<br>
+No blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the third place means:<br>
+A man permits himself to be oppressed by stone,<br>
+And leans on thorns and thistles.<br>
+He enters his house and does not see his wife.<br>
+Misfortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fourth place means:<br>
+He comes very quietly, oppressed in a golden carriage.<br>
+Humiliation, but the end is reached.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fifth place means:<br>
+His nose and feet are cut off.<br>
+Oppression at the hands of the man with the purple knee bands.<br>
+Joy comes softly.<br>
+It furthers one to make offerings and libations.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the top means:<br>
+He is oppressed by creeping vines.<br>
+He moves uncertainly and says, “Movement brings remorse.”<br>
+If one feels remorse over this and makes a start,<br>
+Good fortune comes.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>48.&nbsp; <span class="title">Ching / The Well</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>T<span class="smallCaps">HE WELL</span>.&nbsp; The town may be changed,<br>
+But the well cannot be changed.<br>
+It neither decreases nor increases.<br>
+They come and go and draw from the well.<br>
+If one gets down almost to the water<br>
+And the rope does not go all the way,<br>
+Or the jug breaks, it brings misfortune.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the beginning means:<br>
+One does not drink the mud of the well.<br>
+No animals come to an old well.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the second place means:<br>
+At the wellhole one shoots fishes.<br>
+The jug is broken and leaks.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the third place means:<br>
+The well is cleaned, but no one drinks from it.<br>
+This is my heart’s sorrow,<br>
+For one might draw from it.<br>
+If the king were clear-minded,<br>
+Good fortune might be enjoyed in common.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fourth place means:<br>
+The well is being lined.&nbsp; No blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fifth place means:<br>
+In the well there is a clear, cold spring<br>
+From which one can drink.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the top means:<br>
+One draws from the well<br>
+Without hindrance.<br>
+It is dependable.<br>
+Supreme good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>49.&nbsp; <span class="title">Ko / Revolution (Molting)</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>R<span class="smallCaps">EVOLUTION</span>.&nbsp; On your own day<br>
+You are believed.<br>
+Supreme success,<br>
+Furthering through perseverance.<br>
+Remorse disappears.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the beginning means:<br>
+Wrapped in the hide of a yellow cow.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the second place means:<br>
+When one’s own day comes, one may create revolution.<br>
+Starting brings good fortune.&nbsp; No blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the third place means:<br>
+Starting brings misfortune.<br>
+Perseverance brings danger.<br>
+When talk of revolution has gone the rounds three times,<br>
+One may commit himself,<br>
+And men will believe him.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fourth place means:<br>
+Remorse disappears.&nbsp; Men believe him.<br>
+Changing the form of government brings good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fifth place means:<br>
+The great man changes like a tiger.<br>
+Even before he questions the oracle<br>
+He is believed.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the top means:<br>
+The superior man changes like a panther.<br>
+The inferior man molts in the face.<br>
+Starting brings misfortune.<br>
+To remain persevering brings good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>50.&nbsp; <span class="title">Ting / The Caldron</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>T<span class="smallCaps">HE CALDRON</span>.&nbsp; Supreme good fortune.<br>
+Success.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the beginning means:<br>
+A <i>ting</i> with legs upturned.<br>
+Furthers removal of stagnating stuff.<br>
+One takes a concubine for the sake of her son.<br>
+No blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the second place means:<br>
+There is food in the <i>ting</i>.<br>
+My comrades are envious,<br>
+But they cannot harm me.<br>
+Good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the third place means:<br>
+The handle of the <i>ting</i> is altered.<br>
+One is impeded in his way of life.<br>
+The fat of the pheasant is not eaten.<br>
+Once rain falls, remorse is spent.<br>
+Good fortune comes in the end.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fourth place means:<br>
+The legs of the <i>ting</i> are broken.<br>
+The prince’s meal is spilled<br>
+And his person is soiled.<br>
+Misfortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fifth place means:<br>
+The <i>ting</i> has yellow handles, golden carrying rings.<br>
+Perseverance furthers.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the top means:<br>
+The <i>ting</i> has rings of jade.<br>
+Great good fortune.<br>
+Nothing that would not act to further.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>51.&nbsp; <span class="title">Chên / The Arousing (Shock, Thunder)</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>S<span class="smallCaps">HOCK</span> brings success.<br>
+Shock comes—oh, oh!<br>
+Laughing words—ha, ha!<br>
+The shock terrifies for a hundred miles,<br>
+And he does not let fall the sacrificial spoon and chalice.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the beginning means:<br>
+Shock comes—oh, oh!<br>
+Then follow laughing words—ha, ha!<br>
+Good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the second place means:<br>
+Shock comes bringing danger.<br>
+A hundred thousand times<br>
+You lose your treasures<br>
+And must climb the nine hills.<br>
+Do not go in pursuit of them.<br>
+After seven days you will get them back again.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the third place means:<br>
+Shock comes and makes one distraught.<br>
+If shock spurs to action<br>
+One remains free of misfortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fourth place means:<br>
+Shock is mired.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fifth place means:<br>
+Shock goes hither and thither.<br>
+Danger.<br>
+However, nothing at all is lost.<br>
+Yet there are things to be done.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the top means:<br>
+Shock brings ruin and terrified gazing around.<br>
+Going ahead brings misfortune.<br>
+If it has not yet touched one’s own body<br>
+But has reached one’s neighbor first,<br>
+There is no blame.<br>
+One’s comrades have something to talk about.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>52.&nbsp; <span class="title">Kên / Keeping Still, Mountain</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>K<span class="smallCaps">EEPING STILL</span>.&nbsp; Keeping his back still<br>
+So that he no longer feels his body.<br>
+He goes into his courtyard<br>
+And does not see his people.<br>
+No blame.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the beginning means:<br>
+Keeping his toes still.<br>
+No blame.<br>
+Continued perseverance furthers.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the second place means:<br>
+Keeping his calves still.<br>
+He cannot rescue him whom he follows.<br>
+His heart is not glad.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the third place means:<br>
+Keeping his hips still.<br>
+Making his sacrum stiff.<br>
+Dangerous.&nbsp; The heart suffocates.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fourth place means:<br>
+Keeping his trunk still.<br>
+No blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fifth place means:<br>
+Keeping his jaws still.<br>
+The words have order.<br>
+Remorse disappears.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the top means:<br>
+Noblehearted keeping still.<br>
+Good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>53.&nbsp; <span class="title">Chien / Development (Gradual Progress)</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>D<span class="smallCaps">EVELOPMENT</span>.&nbsp; The maiden<br>
+Is given in marriage.<br>
+Good fortune.<br>
+Perseverance furthers.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the beginning means:<br>
+The wild goose gradually draws near the shore.<br>
+The young son is in danger.<br>
+There is talk.&nbsp; No blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the second place means:<br>
+The wild goose gradually draws near the cliff.<br>
+Eating and drinking in peace and concord.<br>
+Good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the third place means:<br>
+The wild goose gradually draws near the plateau.<br>
+The man goes forth and does not return.<br>
+The woman carries a child but does not bring it forth.<br>
+Misfortune.<br>
+It furthers one to fight off robbers.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fourth place means:<br>
+The wild goose gradually draws near the tree.<br>
+Perhaps it will find a flat branch.&nbsp; No blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fifth place means:<br>
+The wild goose gradually draws near the summit.<br>
+For three years the woman has no child.<br>
+In the end nothing can hinder her.<br>
+Good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the top means:<br>
+The wild goose gradually draws near the cloud heights.<br>
+Its feathers can be used for the sacred dance.<br>
+Good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>54.&nbsp; <span class="title">Kuei Mei / The Marrying Maiden</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>T<span class="smallCaps">HE MARRYING MAIDEN</span>.<br>
+Undertakings bring misfortune.<br>
+Nothing that would further.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the beginning means:<br>
+The marrying maiden as a concubine.<br>
+A lame man who is able to tread.<br>
+Undertakings bring good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the second place means:<br>
+A one-eyed man who is able to see.<br>
+The perseverance of a solitary man furthers.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the third place means:<br>
+The marrying maiden as a slave.<br>
+She marries as a concubine.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fourth place means:<br>
+The marrying maiden draws out the allotted time.<br>
+A late marriage comes in due course.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fifth place means:<br>
+The sovereign I gave his daughter in marriage.<br>
+The embroidered garments of the princess<br>
+Were not as gorgeous<br>
+As those of the servingmaid.<br>
+The moon that is nearly full<br>
+Brings good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the top means:<br>
+The woman holds the basket, but there are no fruits in it.<br>
+The man stabs the sheep, but no blood flows.<br>
+Nothing that acts to further.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>55.&nbsp; <span class="title">Fêng / Abundance [Fullness]</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>A<span class="smallCaps">BUNDANCE</span> has success.<br>
+The king attains abundance.<br>
+Be not sad.<br>
+Be like the sun at midday.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the beginning means:<br>
+When a man meets his destined ruler,<br>
+They can be together ten days,<br>
+And it is not a mistake.<br>
+Going meets with recognition.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the second place means:<br>
+The curtain is of such fullness<br>
+That the polestars can be seen at noon.<br>
+Through going one meets with mistrust and hate.<br>
+If one rouses him through truth,<br>
+Good fortune comes.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the third place means:<br>
+The underbrush is of such abundance<br>
+That the small stars can be seen at noon.<br>
+He breaks his right arm.&nbsp; No blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fourth place means:<br>
+The curtain is of such fullness<br>
+That the polestars can be seen at noon.<br>
+He meets his ruler, who is of like kind.<br>
+Good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fifth place means:<br>
+Lines are coming,<br>
+Blessing and fame draw near.<br>
+Good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the top means:<br>
+His house is in a state of abundance.<br>
+He screens off his family.<br>
+He peers through the gate<br>
+And no longer perceives anyone.<br>
+For three years he sees nothing.<br>
+Misfortune.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>56.&nbsp; <span class="title">Lü / The Wanderer</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>T<span class="smallCaps">HE WANDERER</span>.&nbsp; Success through smallness.<br>
+Perseverance brings good fortune<br>
+To the wanderer.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the beginning means:<br>
+If the wanderer busies himself with trivial things,<br>
+He draws down misfortune upon himself.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the second place means:<br>
+The wanderer comes to an inn.<br>
+He has his property with him.<br>
+He wins the steadfastness of a young servant.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the third place means:<br>
+The wanderer’s inn burns down.<br>
+He loses the steadfastness of his young servant.<br>
+Danger.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fourth place means:<br>
+The wanderer rests in a shelter.<br>
+He obtains his property and an ax.<br>
+My heart is not glad.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fifth place means:<br>
+He shoots a pheasant.<br>
+It drops with the first arrow.<br>
+In the end this brings both praise and office.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the top means:<br>
+The bird’s nest burns up.<br>
+The wanderer laughs at first,<br>
+Then must needs lament and weep.<br>
+Through carelessness he loses his cow.<br>
+Misfortune.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>57.&nbsp; <span class="title">Sun / The Gentle (The Penetrating, Wind)</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>T<span class="smallCaps">HE GENTLE</span>.&nbsp; Success through what is small.<br>
+It furthers one to have somewhere to go.<br>
+It furthers one to see the great man.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the beginning means:<br>
+In advancing and in retreating,<br>
+The perseverance of a warrior furthers.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the second place means:<br>
+Penetration under the bed.<br>
+Priests and magicians are used in great number.<br>
+Good fortune.&nbsp; No blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the third place means:<br>
+Repeated penetration.&nbsp; Humiliation.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fourth place means:<br>
+Remorse vanishes.<br>
+During the hunt<br>
+Three kinds of game are caught.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fifth place means:<br>
+Perseverance brings good fortune.<br>
+Remorse vanishes.<br>
+Nothing that does not further.<br>
+No beginning, but an end.<br>
+Before the change, three days.<br>
+After the change, three days.<br>
+Good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the top means:<br>
+Penetration under the bed.<br>
+He loses his property and his ax.<br>
+Perseverance brings misfortune.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>58.&nbsp; <span class="title">Tui / The Joyous, Lake</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>T<span class="smallCaps">HE JOYOUS</span>.&nbsp; Success.<br>
+Perseverance is favorable.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the beginning means:<br>
+Contented joyousness.&nbsp; Good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the second place means:<br>
+Sincere joyousness.&nbsp; Good fortune.<br>
+Remorse disappears.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the third place means:<br>
+Coming joyousness.&nbsp; Misfortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fourth place means:<br>
+Joyousness that is weighed is not at peace.<br>
+After ridding himself of mistakes a man has joy.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fifth place means:<br>
+Sincerity toward disintegrating influences is dangerous.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the top means:<br>
+Seductive joyousness.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>59.&nbsp; <span class="title">Huan / Dispersion [Dissolution]</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>D<span class="smallCaps">ISPERSION</span>.&nbsp; Success.<br>
+The king approaches his temple.<br>
+It furthers one to cross the great water.<br>
+Perseverance furthers.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the beginning means:<br>
+He brings help with the strength of a horse.<br>
+Good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the second place means:<br>
+At the dissolution<br>
+He hurries to that which supports him.<br>
+Remorse disappears.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the third place means:<br>
+He dissolves his self.&nbsp; No remorse.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fourth place means:<br>
+He dissolves his bond with his group.<br>
+Supreme good fortune.<br>
+Dispersion leads in turn to accumulation.<br>
+This is something that ordinary men do not think of.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fifth place means:<br>
+His loud cries are as dissolving as sweat.<br>
+Dissolution!&nbsp; A king abides without blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the top means:<br>
+He dissolves his blood.<br>
+Departing, keeping at a distance, going out,<br>
+Is without blame.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>60.&nbsp; <span class="title">Chieh / Limitation</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>L<span class="smallCaps">IMITATION</span>.&nbsp; Success.<br>
+Galling limitation must not be persevered in.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the beginning means:<br>
+Not going out of the door and the courtyard<br>
+Is without blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the second place means:<br>
+Not going out of the gate and the courtyard<br>
+Brings misfortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the third place means:<br>
+He who knows no limitation<br>
+Will have cause to lament.<br>
+No blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fourth place means:<br>
+Contented limitation.&nbsp; Success.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fifth place means:<br>
+Sweet limitation brings good fortune.<br>
+Going brings esteem.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the top means:<br>
+Galling limitation.<br>
+Perseverance brings misfortune.<br>
+Remorse disappears.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>61.&nbsp; <span class="title">Chung Fu / Inner Truth</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>I<span class="smallCaps">NNER TRUTH</span>.&nbsp; Pigs and fishes.<br>
+Good fortune.<br>
+It furthers one to cross the great water.<br>
+Perseverance furthers.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the beginning means:<br>
+Being prepared brings good fortune.<br>
+If there are secret designs, it is disquieting.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the second place means:<br>
+A crane calling in the shade.<br>
+Its young answers it.<br>
+I have a good goblet.<br>
+I will share it with you.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the third place means:<br>
+He finds a comrade.<br>
+Now he beats the drum, now he stops.<br>
+Now he sobs, now he sings.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fourth place means:<br>
+The moon nearly at the full.<br>
+The team horse goes astray.<br>
+No blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fifth place means:<br>
+He possesses truth, which links together.<br>
+No blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the top means:<br>
+Cockcrow penetrating to heaven.<br>
+Perseverance brings misfortune.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>62.&nbsp; <span class="title">Hsiao Kuo / Preponderance of the Small</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>P<span class="smallCaps">REPONDERANCE OF THE SMALL</span>.&nbsp; Success.<br>
+Perseverance furthers.<br>
+Small things may be done; great things should not be done.<br>
+The flying bird brings the message:<br>
+It is not well to strive upward,<br>
+It is well to remain below.<br>
+Great good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the beginning means:<br>
+The bird meets with misfortune through flying.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the second place means:<br>
+She passes by her ancestor<br>
+And meets her ancestress.<br>
+He does not reach his prince<br>
+And meets the official.<br>
+No blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the third place means:<br>
+If one is not extremely careful,<br>
+Somebody may come up from behind and strike him.<br>
+Misfortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fourth place means:<br>
+No blame.&nbsp; He meets him without passing by.<br>
+Going brings danger.&nbsp; One must be on guard.<br>
+Do not act.&nbsp; Be constantly persevering.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fifth place means:<br>
+Dense clouds,<br>
+No rain from our western territory.<br>
+The prince shoots and hits him who is in the cave.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the top means:<br>
+He passes him by, not meeting him.<br>
+The flying bird leaves him.<br>
+Misfortune.<br>
+This means bad luck and injury.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>63.&nbsp; <span class="title">Chi Chi / After Completion</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>A<span class="smallCaps">AFTER COMPLETION</span>.&nbsp; Success in small matters.<br>
+Perseverance furthers.<br>
+At the beginning good fortune,<br>
+At the end disorder.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the beginning means:<br>
+He breaks his wheels.<br>
+He gets his tail in the water.<br>
+No blame.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the second place means:<br>
+The woman loses the curtain of her carriage.<br>
+Do not run after it;<br>
+On the seventh day you will get it.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the third place means:<br>
+The Illustrious Ancestor<br>
+Disciplines the Devil’s Country.<br>
+After three years he conquers it.<br>
+Inferior people must not be employed.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fourth place means:<br>
+The finest clothes turn to rags.<br>
+Be careful all day long.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fifth place means:<br>
+The neighbor in the east who slaughters an ox<br>
+Does not attain as much real happiness<br>
+As the neighbor in the west<br>
+With his small offering.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the top means:<br>
+He gets his head in the water.&nbsp; Danger.</p>
+
+<!--lineDelimiter//-->
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--hexagramDelimiter//-->
+
+
+
+
+
+<p>64.&nbsp; <span class="title">Wei Chi / Before Completion</span></p>
+
+<!--imageHTML//-->
+
+<p class="mT"><span class="smallCaps">THE JUDGMENT</span></p>
+
+<p>B<span class="smallCaps">EFORE COMPLETION</span>.&nbsp; Success.<br>
+But if the little fox, after nearly completing the crossing,<br>
+Gets his tail in the water,<br>
+There is nothing that would further.</p>
+
+<!--lineDelimiter//-->
+
+<p class="mT"><span class="smallCaps">THE LINES</span></p>
+
+<!--lineDelimiter//-->
+
+<p>Six at the beginning means:<br>
+He gets his tail in the water.<br>
+Humiliating.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the second place means:<br>
+He brakes his wheels.<br>
+Perseverance brings good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the third place means:<br>
+Before completion, attack brings misfortune.<br>
+It furthers one to cross the great water.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine in the fourth place means:<br>
+Perseverance brings good fortune.<br>
+Remorse disappears.<br>
+Shock, thus to discipline the Devil’s Country.<br>
+For three years, great realms are awarded.</p>
+
+<!--lineDelimiter//-->
+
+<p>Six in the fifth place means:<br>
+Perseverance brings good fortune.<br>
+No remorse.<br>
+The light of the superior man is true.<br>
+Good fortune.</p>
+
+<!--lineDelimiter//-->
+
+<p>Nine at the top means:<br>
+There is drinking of wine<br>
+In genuine confidence.&nbsp; No blame.<br>
+But if one wets his head,<br>
+He loses it, in truth.</p>
+
+<!--lineDelimiter//-->
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+<!--
+////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////
+//-->
+
+
+
+
+
+
+
+
+
+
+
+
+<div id="RichmondDiv" style="display: none">
+
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+<!--
+////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////
+//-->
+
+
+
+
+
+
+
+
+
+
+
+
+<div id="RichterDiv" style="display: none">
+
+<br>
+<!--linkHTML//--><br>
+<br>
+
+<!--textDelimiter//-->
+
+</div> <!-- main div positioned on top of WuChi //-->
+
+
+
+</body>
+</html>
